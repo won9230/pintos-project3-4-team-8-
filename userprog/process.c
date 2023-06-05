@@ -322,63 +322,116 @@ static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
  * Returns true if successful, false otherwise. */
 static bool
 load (const char *file_name, struct intr_frame *if_) {
-	struct thread *t = thread_current ();
+	struct thread *t = thread_current (); // 현재 실행 중인 스레드를 가지고 온다.
+	
+	// 실행 파일의 정보를 저장하기 위한 변수 및 파일 포인터 초기화
 	struct ELF ehdr;
 	struct file *file = NULL;
 	off_t file_ofs;
 	bool success = false;
 	int i;
 
-	/* Allocate and activate page directory. */
-	t->pml4 = pml4_create ();
-	if (t->pml4 == NULL)
-		goto done;
-	process_activate (thread_current ());
+	// 최대 128바이트까지 인자 받을 수 있음.
+	char *argv[MAX_STR_LEN];
+	char **save_ptr;
+	uint64_t argc = 0;
 
-	/* Open executable file. */
-	file = filesys_open (file_name);
+	// 임시 변수에 복사하여 원래의 문자열을 보존
+	char temp[MAX_STR_LEN];
+	strlcpy(temp, file_name, sizeof(temp));
+
+	char *token = strtok_r(temp, " ", &save_ptr);
+
+	while (token != NULL && argc < MAX_NUM_STR) {
+		argv[argc] = token;
+		// strlcpy(argv[argc], token, MAX_STR_LEN);
+		argc++;
+
+		token = strtok_r(NULL, " ", &save_ptr);
+	}
+
+	// 현재 실행 중인 스레드의 페이지 디렉터리 생성 & 초기화
+	t->pml4 = pml4_create (); 
+		
+	// thread 구조체의 pml4 필드에 페이지 디렉터리의 주소가 저장된다.
+	// 오류 발생 시 함수 종료.
+	if (t->pml4 == NULL) 
+		goto done;
+
+	// 현재 실행 중인 스레드의 페이지 디렉터리를 활성화 한다.
+	// 활성화하면 해당 프로세스의 가상 주소 공간에 접근할 수 있게 된다.
+	process_activate (thread_current ()); 
+
+	// 새롭게 실행 할 파일을 연다 (인자로 전달된 file_name으로..) 
+	file = filesys_open (argv[0]);
+	
+	// 파일이 존재하지 않는다면 실패 메세지를 출력하고 함수를 종료한다.
 	if (file == NULL) {
 		printf ("load: %s: open failed\n", file_name);
 		goto done;
 	}
 
-	/* Read and verify executable header. */
+
+
+	// 새롭게 실행 할 파일의 헤더를 읽고 유효성을 검증한다.
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
-			|| memcmp (ehdr.e_ident, "\177ELF\2\1\1", 7)
-			|| ehdr.e_type != 2
-			|| ehdr.e_machine != 0x3E // amd64
-			|| ehdr.e_version != 1
-			|| ehdr.e_phentsize != sizeof (struct Phdr)
-			|| ehdr.e_phnum > 1024) {
+			|| memcmp (ehdr.e_ident, "\177ELF\2\1\1", 7) // ELF 파일의 식별자를 검사하여 ELF 파일인지 확인한다.
+			|| ehdr.e_type != 2                          // ELF 파일의 형식 필드를 검사한다. 2는 실행 가능한 파일을 나타내는 값
+			|| ehdr.e_machine != 0x3E                    // ELF 파일의 아키텍처 필드를 검사한다. 0x3e는 amd 아키텍처를 뜻한다.
+			|| ehdr.e_version != 1						 // ELF 파일의 버전 필드를 검사한다.
+			|| ehdr.e_phentsize != sizeof (struct Phdr)  // ELF 파일 프로그램 헤더의 크기 필드를 검사한다.
+			|| ehdr.e_phnum > 1024)                      // ELF 파일 프로그램 헤더의 개수 필드를 검사한다.
+	{
+		// 위 조건에 맞는 ELF 파일이 아닌 경우에 오류 출력 후 함수 종료.
 		printf ("load: %s: error loading executable\n", file_name);
 		goto done;
 	}
 
-	/* Read program headers. */
+	// 실행 할 ELF 파일의 프로그램 헤더를 읽어 세그먼트를 로드한다. 
+	// (프로그램 헤더는 ELF 파일 내에 여러 세그먼트에 대한 정보를 담고 있다.)
+
+	// 프로그램 헤더 테이블 시작 위치를 변수 file_ofs에 할당
 	file_ofs = ehdr.e_phoff;
+
+	// 프로그램 헤더 테이블의 개수(e_phnum)만큼 프로그램 헤더를 읽고 처리한다.
 	for (i = 0; i < ehdr.e_phnum; i++) {
+		// 프로그램 헤더를 저장하기 위한 구조체
 		struct Phdr phdr;
 
+		// 현재 프로그램 헤더의 오프셋 값이 파일의 범위를 벗어났거나 음수일 경우 오류로 간주하고 함수 종료.
 		if (file_ofs < 0 || file_ofs > file_length (file))
 			goto done;
+
+		// 파일을 읽을 위치를 file_ofs으로 이동 시킨다.
+		// file_read 호출에서 file_ofs 위치부터 읽을 수 있음.
 		file_seek (file, file_ofs);
 
+		// 파일에서 phdr에 sizeof phdr 만큼 데이터를 읽어 왔을 때, 크기가 sizeof phdr와 다르다면 오류로 간주.
 		if (file_read (file, &phdr, sizeof phdr) != sizeof phdr)
 			goto done;
+
+		// 다음 프로그램 헤더를 읽기 위해서 file_ofs 값을 증가시긴다.
 		file_ofs += sizeof phdr;
+
+		// 현재 프로그램 헤더의 세그먼트 타입을 확인하고, 해당 세그먼트의 처리를 수행한다.
 		switch (phdr.p_type) {
 			case PT_NULL:
 			case PT_NOTE:
 			case PT_PHDR:
 			case PT_STACK:
 			default:
+				// PT_NULL, PT_NOTE, PT_PHDR, PT_STACK일 경우 무시하고 다음 프로그램 헤더로 이동.
 				/* Ignore this segment. */
 				break;
 			case PT_DYNAMIC:
 			case PT_INTERP:
 			case PT_SHLIB:
+				// PT_DYNAMIC, PT_INTERP, PT_SHLIB 일 경우 처리를 중단하고 done
 				goto done;
 			case PT_LOAD:
+				// PT_LOAD일 경우 해당 세그먼트는 로드해야 하는 유효한 세그먼트이다.
+				// validate_segment를 사용해서 세그먼트를 검증한 후에 해당 세그먼트를 메모리에 로드한다.
+				// 로드 할 때 읽어야할 바이트 수와 초기화되지 않은 영역의 크기를 계산해서 전달한다.
 				if (validate_segment (&phdr, file)) {
 					bool writable = (phdr.p_flags & PF_W) != 0;
 					uint64_t file_page = phdr.p_offset & ~PGMASK;
@@ -397,30 +450,82 @@ load (const char *file_name, struct intr_frame *if_) {
 						read_bytes = 0;
 						zero_bytes = ROUND_UP (page_offset + phdr.p_memsz, PGSIZE);
 					}
+
+					// 세그먼트가 성공적으로 로드되지 않으면 done으로 분기처리 하여 처리를 종료한다.
 					if (!load_segment (file, file_page, (void *) mem_page,
 								read_bytes, zero_bytes, writable))
 						goto done;
 				}
+				
 				else
 					goto done;
 				break;
 		}
 	}
 
-	/* Set up stack. */
+	// 스택을 설정하는 함수인 setup_stack을 호출해서 스택을 초기화한다. 
+	// 스택 설정에 실패하면 done으로 분기처리 후 처리 종료
 	if (!setup_stack (if_))
 		goto done;
 
-	/* Start address. */
+	// ELF 파일의 진입점 주소를 저장한다. 프로그램 실행은 이 주소부터 시작된다.
 	if_->rip = ehdr.e_entry;
 
-	/* TODO: Your code goes here.
-	 * TODO: Implement argument passing (see project2/argument_passing.html). */
+	/* arguments passing */
 
+	// argv 인자들을 스택에 push
+	for(int i = argc - 1; i >= 0; i--) {
+		size_t arg_len = strlen(argv[i]) + 1;    // 널 문자 포한한 인자의 길이 계산.
+		if_->rsp -= arg_len;                     // 스택 포인터를 인자의 길이만큼 이동하여 공간을 확보.
+		memcpy(if_->rsp, argv[i], arg_len);      // 인자를 스택에 복사한다.
+		argv[i] = (char *)if_->rsp;
+	}
+
+	if(if_->rsp % 8 != 0) {
+		if_->rsp = (if_->rsp / 8 - 1) * 8;
+	}
+
+	/* 널 포인터를 센티넬 값으로 push */
+	if_->rsp -= 8;
+	memset(if_->rsp, 0 ,8);
+
+	/*
+	********************************************************************************************************
+	* 오류 발생 argv[i] -> &argv[i]
+	*/
+
+	// 주소 포인터들을 스택에 push
+	for (int i = argc - 1; i >= 0; i--) {
+		if_->rsp -= 8;  				// 주소 포인터 크기만큼 스택 포인터 이동
+		memcpy(if_->rsp, &argv[i], 8);  // 주소 포인터를 스택에 저장
+	}
+
+	// uint16_t *temp_addr = if_->rsp;
+
+	// if_->rsp -= 8;
+	// memcpy(if_->rsp, &temp_addr, 8);
+
+	// if_->rsp -= 4;
+	// memcpy(if_->rsp, &argc, 4);
+
+	// fake return address
+	if_->rsp -= 8;
+	memset(if_->rsp, 0, 8);
+
+	hex_dump(if_->rsp, if_->rsp, USER_STACK - if_->rsp, true);
+
+	// 함수 호출을 위해 레지스터 설정
+	if_->R.rdi = argc;
+	if_->R.rsi = if_->rsp + 8;
+
+	// 성공적으로 ELF 파일이 로드되었으므로 success 변수를 true로 설정한다.
 	success = true;
 
 done:
-	/* We arrive here whether the load is successful or not. */
+	// goto done 문이 실행되었을 때의 처리 목록
+	// 오류가 발생했을 때 OR 처리가 완료되었을 때 실행된다.
+
+	// 파일을 닫고, 성공 여부를 반환한다.
 	file_close (file);
 	return success;
 }

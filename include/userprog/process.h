@@ -1,5 +1,8 @@
 #ifndef USERPROG_PROCESS_H
 #define USERPROG_PROCESS_H
+#define MAX_STR_LEN 128
+#define MAX_NUM_STR 4
+
 
 #include "threads/thread.h"
 
