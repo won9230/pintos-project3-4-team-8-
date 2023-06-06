@@ -184,7 +184,7 @@ process_exec (void *f_name) {
 	if (!success)
 		return -1;
 
-	// hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
 
 	/* Start switched process. */
 	do_iret (&_if);
@@ -507,7 +507,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	if_->R.rdi = argc;
 	if_->R.rsi = if_->rsp;
 
-	// printf("\n%p\n", if_->rsp);
+	// printf("\n%lld\n", argc);
 
 	// fake return address
 	if_->rsp -= 8;

@@ -47,20 +47,26 @@ syscall_handler (struct intr_frame *f) {
 	// USER MEMORY ACCESS
 	// 시스템 호출의 인자로 제공된 
 
-	switch(f->R.rax) {
+	switch (f -> R.rax) {
 		case SYS_HALT:
 			halt();
 			break;
 		case SYS_EXIT:
 			// exit();
 			break;
+		case SYS_WRITE:
+			f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
+			break;
 		default:
 			break;
 	}
+
+	// thread_exit();
 }
 
 /* halt */
 void halt(void) {
+
 	power_off();
 }
 
@@ -72,4 +78,10 @@ void exit(int status) {
 /* write */
 int write (int fd, const void *buffer, unsigned size) {
 
+	// 만약 fd = 1 이면 putbuf() 사용해서 출력
+	if(fd == 1) {
+		putbuf(buffer, size);
+
+		return size;
+	}
 };
