@@ -336,7 +336,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	char **save_ptr;
 	uint64_t argc = 0;
 
-	// 임시 변수에 복사하여 원래의 문자열을 보존
+	// 임시 변수에 복사하여 원래의 문자열을 보존 -> 혹시 몰라서
 	char temp[MAX_STR_LEN];
 	strlcpy(temp, file_name, sizeof(temp));
 
@@ -370,8 +370,6 @@ load (const char *file_name, struct intr_frame *if_) {
 		printf ("load: %s: open failed\n", file_name);
 		goto done;
 	}
-
-
 
 	// 새롭게 실행 할 파일의 헤더를 읽고 유효성을 검증한다.
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -478,21 +476,22 @@ load (const char *file_name, struct intr_frame *if_) {
 		size_t arg_len = strlen(argv[i]) + 1;    // 널 문자 포한한 인자의 길이 계산.
 		if_->rsp -= arg_len;                     // 스택 포인터를 인자의 길이만큼 이동하여 공간을 확보.
 		memcpy(if_->rsp, argv[i], arg_len);      // 인자를 스택에 복사한다.
+	
 		argv[i] = (char *)if_->rsp;
 	}
 
-	if(if_->rsp % 8 != 0) {
-		if_->rsp = (if_->rsp / 8 - 1) * 8;
-	}
+	// 패딩 값 설정.
+	// x64 시스템  -> double word align
+	// 8의 배수로 내림해준다.
+	// if(if_->rsp % 8 != 0) {
+	// 	if_->rsp = (if_->rsp / 8) * 8;
+	// 	if_->rsp -= 8;
+	// }
 
-	/* 널 포인터를 센티넬 값으로 push */
+	// 널 포인터를 센티넬 값으로 push 
+	// 즉 argv[argc] = NULL 을 센티넬 값으로 push
 	if_->rsp -= 8;
-	memset(if_->rsp, 0 ,8);
-
-	/*
-	********************************************************************************************************
-	* 오류 발생 argv[i] -> &argv[i]
-	*/
+	memset(if_->rsp, 0, 8);
 
 	// 주소 포인터들을 스택에 push
 	for (int i = argc - 1; i >= 0; i--) {
@@ -500,23 +499,13 @@ load (const char *file_name, struct intr_frame *if_) {
 		memcpy(if_->rsp, &argv[i], 8);  // 주소 포인터를 스택에 저장
 	}
 
-	// uint16_t *temp_addr = if_->rsp;
-
-	// if_->rsp -= 8;
-	// memcpy(if_->rsp, &temp_addr, 8);
-
-	// if_->rsp -= 4;
-	// memcpy(if_->rsp, &argc, 4);
+	// 함수 호출을 위해 레지스터 설정
+	if_->R.rdi = argc;
+	if_->R.rsi = if_->rsp;
 
 	// fake return address
 	if_->rsp -= 8;
 	memset(if_->rsp, 0, 8);
-
-	hex_dump(if_->rsp, if_->rsp, USER_STACK - if_->rsp, true);
-
-	// 함수 호출을 위해 레지스터 설정
-	if_->R.rdi = argc;
-	if_->R.rsi = if_->rsp + 8;
 
 	// 성공적으로 ELF 파일이 로드되었으므로 success 변수를 true로 설정한다.
 	success = true;
