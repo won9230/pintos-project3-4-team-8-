@@ -184,6 +184,8 @@ process_exec (void *f_name) {
 	if (!success)
 		return -1;
 
+	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+
 	/* Start switched process. */
 	do_iret (&_if);
 	NOT_REACHED ();
@@ -483,10 +485,9 @@ load (const char *file_name, struct intr_frame *if_) {
 	// 패딩 값 설정.
 	// x64 시스템  -> double word align
 	// 8의 배수로 내림해준다.
-	// if(if_->rsp % 8 != 0) {
-	// 	if_->rsp = (if_->rsp / 8) * 8;
-	// 	if_->rsp -= 8;
-	// }
+	if(if_->rsp % 8 != 0) {
+		if_->rsp = (if_->rsp / 8) * 8;
+	}
 
 	// 널 포인터를 센티넬 값으로 push 
 	// 즉 argv[argc] = NULL 을 센티넬 값으로 push
@@ -502,6 +503,8 @@ load (const char *file_name, struct intr_frame *if_) {
 	// 함수 호출을 위해 레지스터 설정
 	if_->R.rdi = argc;
 	if_->R.rsi = if_->rsp;
+
+	printf("\n%p\n", if_->rsp);
 
 	// fake return address
 	if_->rsp -= 8;
