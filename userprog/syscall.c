@@ -7,6 +7,7 @@
 #include "userprog/gdt.h"
 #include "threads/flags.h"
 #include "intrinsic.h"
+#include "threads/init.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -39,8 +40,36 @@ syscall_init (void) {
 
 /* The main system call interface */
 void
-syscall_handler (struct intr_frame *f UNUSED) {
+syscall_handler (struct intr_frame *f) {
 	// TODO: Your implementation goes here.
-	printf ("system call!\n");
-	thread_exit ();
+	// printf ("system call!\n");
+
+	// USER MEMORY ACCESS
+	// 시스템 호출의 인자로 제공된 
+
+	switch(f->R.rax) {
+		case SYS_HALT:
+			halt();
+			break;
+		case SYS_EXIT:
+			// exit();
+			break;
+		default:
+			break;
+	}
 }
+
+/* halt */
+void halt(void) {
+	power_off();
+}
+
+/* exit */
+void exit(int status) {
+	thread_exit();
+} 
+
+/* write */
+int write (int fd, const void *buffer, unsigned size) {
+
+};
