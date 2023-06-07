@@ -1,4 +1,4 @@
-#include "userprog/syscall.h"
+#include "include/lib/user/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
@@ -25,8 +25,10 @@ void syscall_handler (struct intr_frame *);
 #define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
 
-void
-syscall_init (void) {
+/**
+ * initailize syscall
+*/
+void syscall_init (void) {
 	write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48  |
 			((uint64_t)SEL_KCSEG) << 32);
 	write_msr(MSR_LSTAR, (uint64_t) syscall_entry);
@@ -38,9 +40,11 @@ syscall_init (void) {
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
-/* The main system call interface */
-void
-syscall_handler (struct intr_frame *f) {
+/**
+ * The main system call interface
+ * @param f
+*/
+void syscall_handler (struct intr_frame *f) {
 	// TODO: Your implementation goes here.
 	// printf ("system call!\n");
 
@@ -52,32 +56,43 @@ syscall_handler (struct intr_frame *f) {
 			halt();
 			break;
 		case SYS_EXIT:
-			// exit();
+			exit(f->R.rdi);
 			break;
 		case SYS_WRITE:
-			f->R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
+			f -> R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
 			break;
 		default:
 			break;
 	}
-
-	// thread_exit();
 }
 
-/* halt */
+/**
+ * halt 
+*/
 void halt(void) {
-
 	power_off();
 }
 
-/* exit */
+/**
+ * exit
+ * @param status
+*/
 void exit(int status) {
+	struct thread *curr = thread_current();
+	// 현재 사용자 프로그램을 종료하고 상태를 커널에 반환한다.
+	// 민약 해당 프로세스의 부모 프로세스가 존재하고 대기 중이라면 종료 상태값이 부모 프로세스에게 반환된다.
+
+	printf("%s: exit(%d)\n", curr->name, status);
 	thread_exit();
 } 
 
-/* write */
+/**
+ * write
+ * @param fd
+ * @param buffer
+ * @param size
+*/
 int write (int fd, const void *buffer, unsigned size) {
-
 	// 만약 fd = 1 이면 putbuf() 사용해서 출력
 	if(fd == 1) {
 		putbuf(buffer, size);

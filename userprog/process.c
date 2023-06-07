@@ -184,7 +184,7 @@ process_exec (void *f_name) {
 	if (!success)
 		return -1;
 
-	hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
+	// hex_dump(_if.rsp, _if.rsp, USER_STACK - _if.rsp, true);
 
 	/* Start switched process. */
 	do_iret (&_if);
@@ -234,17 +234,25 @@ process_cleanup (void) {
 #endif
 
 	uint64_t *pml4;
-	/* Destroy the current process's page directory and switch back
-	 * to the kernel-only page directory. */
+	/* 
+		현재 프로세스의 페이지 디렉토리를 제거하고, 커널 전용 페이지 디렉토리로 다시 전환한다.
+		(운영 체제는 가상 메모리 관리를 위해 프로세스마다 별도의 페이지 디렉토리를 사용한다. 
+		페이지 디렉토리는 가상 주소 공간과 실제 물리 메모리를 매핑하는 역할을 한다.)
+	*/
 	pml4 = curr->pml4;
 	if (pml4 != NULL) {
-		/* Correct ordering here is crucial.  We must set
-		 * cur->pagedir to NULL before switching page directories,
-		 * so that a timer interrupt can't switch back to the
-		 * process page directory.  We must activate the base page
-		 * directory before destroying the process's page
-		 * directory, or our active page directory will be one
-		 * that's been freed (and cleared). */
+		/* 
+			아래 작업을 수행할 때 순서를 지켜주는 것은 매우 중요하다.
+			
+			1. curr -> pagedir 를 NULL로 설정한다. : curr는 현재 프로세스를 가리키는 포인터.
+			즉 현재 프로세스의 페이지 디렉터리를 NULL로 설정해서 타이머 인터럽트가 프로세스 페이지 디렉토리로 다시 전환되는 것을 방지하기 위함.
+			타이머 인터럽트가 발생하더라도 현재 종료되는 프로세스의 페이지 디렉토리로 다시 돌아가지 않도록 하는 것.
+			
+			2. 활성화된 페이지 디렉토리를 기본 페이지 디렉토리로 변경한다.
+			이렇게 하면 현재 활성화된 페이지 디렉토리가 이미 해제되거나 초기화되었다고 가정하는 문제를 방지할 수 있다.
+
+			3. 마지막으로, 종료되는 프로세스의 페이지 디렉토리를 파괴한다. 이는 해당 프로세스의 페이지 디렉토리와 관련된 자원을 해제하고 정리하는 작업.
+		*/
 		curr->pml4 = NULL;
 		pml4_activate (NULL);
 		pml4_destroy (pml4);
