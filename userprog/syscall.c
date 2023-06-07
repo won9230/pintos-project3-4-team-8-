@@ -1,4 +1,4 @@
-#include "include/lib/user/syscall.h"
+#include "userprog/syscall.h"
 #include <stdio.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
@@ -8,6 +8,8 @@
 #include "threads/flags.h"
 #include "intrinsic.h"
 #include "threads/init.h"
+#include "include/threads/vaddr.h"
+#include "userprog/process.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -48,9 +50,6 @@ void syscall_handler (struct intr_frame *f) {
 	// TODO: Your implementation goes here.
 	// printf ("system call!\n");
 
-	// USER MEMORY ACCESS
-	// 시스템 호출의 인자로 제공된 
-
 	switch (f -> R.rax) {
 		case SYS_HALT:
 			halt();
@@ -61,10 +60,28 @@ void syscall_handler (struct intr_frame *f) {
 		case SYS_WRITE:
 			f -> R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
 			break;
+		case SYS_FORK:
+			f -> R.rax = fork(f->R.rdi);
 		default:
 			break;
 	}
 }
+
+int is_correct_pointer(const void *addr) {
+	struct thread *curr = thread_current();
+
+	if(is_kernel_vaddr(addr) || addr == NULL) {
+		return 0;
+	}
+
+	if(pml4_get_page(curr->pml4, addr) == NULL) {
+		return 0;
+	}
+
+	return 1;
+}
+
+/* 프로세스 관련 시스템 콜 */
 
 /**
  * halt 
@@ -84,7 +101,35 @@ void exit(int status) {
 
 	printf("%s: exit(%d)\n", curr->name, status);
 	thread_exit();
-} 
+}
+
+/**
+ * fork
+ * @param thread_name
+*/
+pid_t fork (const char *thread_name) {
+	struct thread *curr = thread_current();
+
+	return process_fork(thread_name, &curr->tf);
+}
+
+/**
+ * exec
+ * @param file
+*/
+int exec (const char *file) {
+	process_exec(file);
+}
+
+/**
+ * wait
+ * @param pid_t
+*/
+int wait (pid_t pid) {
+
+}
+
+/* 파일 관련 시스템 콜 */
 
 /**
  * write
@@ -99,4 +144,6 @@ int write (int fd, const void *buffer, unsigned size) {
 
 		return size;
 	}
+
+
 };
