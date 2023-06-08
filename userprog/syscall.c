@@ -62,9 +62,14 @@ void syscall_handler (struct intr_frame *f) {
 			break;
 		case SYS_FORK:
 			f -> R.rax = fork(f->R.rdi);
+			break;
+		case SYS_WAIT:
+			f->R.rax = wait(f->R.rdi);
+			break;
 		default:
 			break;
 	}
+
 }
 
 int is_correct_pointer(const void *addr) {
@@ -126,7 +131,7 @@ int exec (const char *file) {
  * @param pid_t
 */
 int wait (pid_t pid) {
-
+	return process_wait((tid_t)pid);
 }
 
 /* 파일 관련 시스템 콜 */
@@ -144,6 +149,4 @@ int write (int fd, const void *buffer, unsigned size) {
 
 		return size;
 	}
-
-
 };
