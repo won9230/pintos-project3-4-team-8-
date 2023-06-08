@@ -97,11 +97,13 @@ struct thread {
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
-	uint64_t *pml4;                     /* Page map level 4 */
 	struct list child_list;
 	struct thread *parent;				/* parent thread */
 	
+	struct semaphore* p_sema;
+	int exit_status;
 	struct list_elem p_elem;			/* Process element */
+	uint64_t *pml4;                     /* Page map level 4 */
 
 #endif
 #ifdef VM

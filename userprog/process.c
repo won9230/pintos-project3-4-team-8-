@@ -27,6 +27,21 @@ static bool load (const char *file_name, struct intr_frame *if_);
 static void initd (void *f_name);
 static void __do_fork (void *);
 
+
+int is_correct_pointer(const void *addr) {
+	struct thread *curr = thread_current();
+
+	if(is_kernel_vaddr(addr) || addr == NULL) {
+		return 0;
+	}
+
+	// if(pml4_get_page(curr->pml4, addr) == NULL) {
+	// 	return 0;
+	// }
+
+	return 1;
+}
+
 /* General process initializer for initd and other process. */
 static void
 process_init (void) {
@@ -91,14 +106,16 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	void *parent_page;
 	void *newpage;
 	bool writable;
-	printf("check\n");
+	if(!is_correct_pointer(va)){
+		return true;
+	}
 
 	/* 1. TODO: If the parent_page is kernel page, then return immediately. */
 	if (pte == base_pml4) {
 		return false;
 	}
 
-	printf("TODO 1 COMPLETE\n\n");
+	// printf("TODO 1 COMPLETE\n\n");
 
 	/* 2. Resolve VA from the parent's page map level 4. */
 	parent_page = pml4_get_page (parent->pml4, va);
@@ -108,7 +125,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	 *    TODO: NEWPAGE. */
 	newpage = palloc_get_page(PAL_USER);
 
-	printf("TODO 3 COMPLETE\n\n");
+	// printf("TODO 3 COMPLETE\n\n");
 
 
 	/* 4. TODO: Duplicate parent's page to the new page and
@@ -121,7 +138,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	}else {
 		writable = false;
 	}
-	printf("TODO 4 COMPLETE\n\n");
+	// printf("TODO 4 COMPLETE\n\n");
 
 
 	/* 5. Add new page to child's page table at address VA with WRITABLE
@@ -132,7 +149,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 		return false;
 	}
 
-	printf("TODO 5 COMPLETE\n\n");
+	// printf("TODO 5 COMPLETE\n\n");
 
 	return true;
 }
@@ -149,7 +166,7 @@ __do_fork (void *aux) {
 	// parent thread
 	struct thread *parent = (struct thread *) aux;
 
-	// chile thread
+	// child thread
 	struct thread *current = thread_current();
 
 	/* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
@@ -175,12 +192,14 @@ __do_fork (void *aux) {
 	if (!pml4_for_each (parent->pml4, duplicate_pte, parent))
 		goto error;
 #endif
-
+	current->parent = parent;
+	list_push_back(&parent->child_list, &current->p_elem);
 	/* TODO: Your code goes here.
 	 * TODO: Hint) To duplicate the file object, use `file_duplicate`
 	 * TODO:       in include/filesys/file.h. Note that parent should not return
 	 * TODO:       from the fork() until this function successfully duplicates
 	 * TODO:       the resources of parent.*/
+
 	process_init ();
 
 	/* Finally, switch to the newly created process. */
@@ -231,16 +250,36 @@ process_exec (void *f_name) {
  *
  * This function will be implemented in problem 2-2.  For now, it
  * does nothing. */
+
 int
 process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	for(int i=0; i<1000000000; i++){
+	// for(int i=0; i<1000000000; i++){
 		
+	// }
+	struct thread *curr = thread_current();
+	struct thread *child_thread;
+	
+	if (child_thread = find_child(&curr->child_list, child_tid) != NULL){
+		sema_down(child_thread->p_sema);
+		int exit_status = curr->exit_status;
+		palloc_free_page(child_thread);
+		return exit_status;
 	}
-
 	return -1;
+}
+struct thread* find_child(struct list *c_list, tid_t child_tid)
+{
+	for (struct list_elem* e = list_begin (&c_list); e != list_end (&c_list); e = list_next (e))
+ 	{
+		struct thread *child_thread =list_entry(e, struct thread, p_elem);
+		if (child_thread->tid== child_tid){
+			return child_thread;
+		}
+ 	}
+	return NULL;
 }
 
 /* Exit the process. This function is called by thread_exit (). */
@@ -253,6 +292,7 @@ process_exit (void) {
 	 * TODO: We recommend you to implement process resource cleanup here. */
 
 	process_cleanup ();
+	sema_up(curr->p_sema);
 }
 
 /* Free the current process's resources. */
@@ -295,6 +335,7 @@ process_cleanup (void) {
 void
 process_activate (struct thread *next) {
 	/* Activate thread's page tables. */
+	// printf("check fault\n");
 	pml4_activate (next->pml4);
 
 	/* Set thread's kernel stack for use in processing interrupts. */
