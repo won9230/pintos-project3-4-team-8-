@@ -103,7 +103,7 @@ void exit(int status) {
 	struct thread *curr = thread_current();
 	// 현재 사용자 프로그램을 종료하고 상태를 커널에 반환한다.
 	// 민약 해당 프로세스의 부모 프로세스가 존재하고 대기 중이라면 종료 상태값이 부모 프로세스에게 반환된다.
-
+	curr->exit_status = status;
 	printf("%s: exit(%d)\n", curr->name, status);
 	thread_exit();
 }
@@ -131,7 +131,7 @@ int exec (const char *file) {
  * @param pid_t
 */
 int wait (pid_t pid) {
-	return process_wait((tid_t)pid);
+	return process_wait((pid_t)pid);
 }
 
 /* 파일 관련 시스템 콜 */

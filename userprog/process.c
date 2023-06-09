@@ -46,6 +46,9 @@ int is_correct_pointer(const void *addr) {
 static void
 process_init (void) {
 	struct thread *current = thread_current ();
+	if(current != current->parent){
+		list_push_back(&current -> parent -> child_list, &current->p_elem);
+	}
 }
 
 /* Starts the first userland program, called "initd", loaded from FILE_NAME.
@@ -58,6 +61,7 @@ process_create_initd (const char *file_name) {
 	char *fn_copy;
 	tid_t tid;
 	char** save_ptr;
+	struct thread *curr = thread_current();
 
 	/* Make a copy of FILE_NAME.
 	 * Otherwise there's a race between the caller and load(). */
@@ -71,6 +75,7 @@ process_create_initd (const char *file_name) {
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
+
 	return tid;
 }
 
@@ -199,7 +204,6 @@ __do_fork (void *aux) {
 	 * TODO:       in include/filesys/file.h. Note that parent should not return
 	 * TODO:       from the fork() until this function successfully duplicates
 	 * TODO:       the resources of parent.*/
-
 	process_init ();
 
 	/* Finally, switch to the newly created process. */
@@ -256,29 +260,33 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-	// for(int i=0; i<1000000000; i++){
-		
-	// }
-	struct thread *curr = thread_current();
-	struct thread *child_thread;
+	struct thread *curr = thread_current(); // 현재 스레드
+	struct thread *child_thread; 			// 자식 스레드가 존재한다면? 자식 스레드 
 	
-	if (child_thread = find_child(&curr->child_list, child_tid) != NULL){
-		sema_down(child_thread->p_sema);
+	// 만약 자식 스레드가 존재한다면? 끝날 때까지 기다린다.
+	if ((child_thread = find_child(&curr->child_list, child_tid) )!= NULL){
+		sema_down(&child_thread->p_sema);
+		sema_up(&child_thread->e_sema);
 		int exit_status = curr->exit_status;
-		palloc_free_page(child_thread);
 		return exit_status;
 	}
+
+	// wait 함수가 실패할 경우에는 -1을 반환한다.
+	// 아래 두 가지 경우일 때에도 -1을 반환한다.
+	// 1. child_tid의 스레드가 현재 스레드의 직접적인 자식 스레드가 아닌 경우.
+	// 2. child_tid의 wait()이 이미 호출된 경우.
 	return -1;
 }
-struct thread* find_child(struct list *c_list, tid_t child_tid)
-{
-	for (struct list_elem* e = list_begin (&c_list); e != list_end (&c_list); e = list_next (e))
- 	{
+
+struct thread* find_child(struct list *c_list, tid_t child_tid) {
+	for (struct list_elem* e = list_begin (c_list); e != list_end (c_list); e = list_next (e)) {
 		struct thread *child_thread =list_entry(e, struct thread, p_elem);
+		
 		if (child_thread->tid== child_tid){
 			return child_thread;
 		}
  	}
+
 	return NULL;
 }
 
@@ -290,9 +298,10 @@ process_exit (void) {
 	 * TODO: Implement process termination message (see
 	 * TODO: project2/process_termination.html).
 	 * TODO: We recommend you to implement process resource cleanup here. */
-
+	
 	process_cleanup ();
-	sema_up(curr->p_sema);
+	sema_up(&curr->p_sema);
+	sema_down(&curr->e_sema);
 }
 
 /* Free the current process's resources. */

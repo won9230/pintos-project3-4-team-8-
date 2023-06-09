@@ -190,6 +190,8 @@ thread_create (const char *name, int priority, thread_func *function, void *aux)
 
 	/* Initialize thread. */
 	init_thread (t, name, priority);
+	t->parent= thread_current();
+	list_push_back(&t->parent->child_list , &t->p_elem);
 	tid = t->tid = allocate_tid ();
 
 	/* Call the kernel_thread if it scheduled.
@@ -408,8 +410,10 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->tf.rsp = (uint64_t) t + PGSIZE - sizeof (void *);
 	t->priority = priority;
 	t->magic = THREAD_MAGIC;
+	// t->parent = thread_current();
 	list_init (&t->child_list); 
 	sema_init (&t->p_sema, 0);
+	sema_init (&t->e_sema, 0);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should

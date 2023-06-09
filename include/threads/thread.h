@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 #include "threads/interrupt.h"
 #ifdef VM
 #include "vm/vm.h"
@@ -100,7 +101,8 @@ struct thread {
 	struct list child_list;
 	struct thread *parent;				/* parent thread */
 	
-	struct semaphore* p_sema;
+	struct semaphore p_sema;
+	struct semaphore e_sema;
 	int exit_status;
 	struct list_elem p_elem;			/* Process element */
 	uint64_t *pml4;                     /* Page map level 4 */
