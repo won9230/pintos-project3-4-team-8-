@@ -46,6 +46,7 @@ int is_correct_pointer(const void *addr) {
 static void
 process_init (void) {
 	struct thread *current = thread_current ();
+
 	if(current != current->parent){
 		list_push_back(&current -> parent -> child_list, &current->p_elem);
 	}
@@ -106,11 +107,12 @@ process_fork (const char *name, struct intr_frame *if_ UNUSED) {
  * pml4_for_each. This is only for the project 2. */
 static bool
 duplicate_pte (uint64_t *pte, void *va, void *aux) {
-	struct thread *current = thread_current ();
-	struct thread *parent = (struct thread *) aux;
+	struct thread *current = thread_current ();    // child thread
+	struct thread *parent = (struct thread *) aux; // parent thread
 	void *parent_page;
 	void *newpage;
 	bool writable;
+
 	if(!is_correct_pointer(va)){
 		return true;
 	}
@@ -120,18 +122,15 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 		return false;
 	}
 
-	// printf("TODO 1 COMPLETE\n\n");
-
 	/* 2. Resolve VA from the parent's page map level 4. */
 	parent_page = pml4_get_page (parent->pml4, va);
 
-
 	/* 3. TODO: Allocate new PAL_USER page for the child and set result to
 	 *    TODO: NEWPAGE. */
-	newpage = palloc_get_page(PAL_USER);
-
-	// printf("TODO 3 COMPLETE\n\n");
-
+	newpage = palloc_get_page(PAL_ZERO);
+	if(newpage == NULL) {
+		return false;
+	}
 
 	/* 4. TODO: Duplicate parent's page to the new page and
 	 *    TODO: check whether parent's page is writable or not (set WRITABLE
@@ -143,18 +142,14 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	}else {
 		writable = false;
 	}
-	// printf("TODO 4 COMPLETE\n\n");
-
 
 	/* 5. Add new page to child's page table at address VA with WRITABLE
 	 *    permission. */
 	if (!pml4_set_page (current->pml4, va, newpage, writable)) {
 		/* 6. TODO: if fail to insert page, do error handling. */
-
+        palloc_free_page(newpage);
 		return false;
 	}
-
-	// printf("TODO 5 COMPLETE\n\n");
 
 	return true;
 }
@@ -167,12 +162,8 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 static void
 __do_fork (void *aux) {
 	struct intr_frame if_;
-
-	// parent thread
-	struct thread *parent = (struct thread *) aux;
-
-	// child thread
-	struct thread *current = thread_current();
+	struct thread *parent = (struct thread *) aux; // parent thread
+	struct thread *current = thread_current();     // child thread
 
 	/* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
 	struct intr_frame *parent_if;
@@ -197,13 +188,14 @@ __do_fork (void *aux) {
 	if (!pml4_for_each (parent->pml4, duplicate_pte, parent))
 		goto error;
 #endif
-	current->parent = parent;
-	list_push_back(&parent->child_list, &current->p_elem);
+	// current->parent = parent;
+	// list_push_back(&parent->child_list, &current->p_elem);
 	/* TODO: Your code goes here.
 	 * TODO: Hint) To duplicate the file object, use `file_duplicate`
 	 * TODO:       in include/filesys/file.h. Note that parent should not return
 	 * TODO:       from the fork() until this function successfully duplicates
 	 * TODO:       the resources of parent.*/
+	
 	process_init ();
 
 	/* Finally, switch to the newly created process. */
@@ -261,13 +253,14 @@ process_wait (tid_t child_tid UNUSED) {
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
 	struct thread *curr = thread_current(); // 현재 스레드
-	struct thread *child_thread; 			// 자식 스레드가 존재한다면? 자식 스레드 
+	struct thread *child_thread = find_child(&curr->child_list, child_tid);			// 자식 스레드가 존재한다면? 자식 스레드 
 	
 	// 만약 자식 스레드가 존재한다면? 끝날 때까지 기다린다.
-	if ((child_thread = find_child(&curr->child_list, child_tid) )!= NULL){
+	if (child_thread != NULL){
 		sema_down(&child_thread->p_sema);
-		sema_up(&child_thread->e_sema);
 		int exit_status = curr->exit_status;
+		list_remove(&child_thread->p_elem); // 자식 스레드를 자식 스레드 리스트에서 제거
+		sema_up(&child_thread->e_sema);
 		return exit_status;
 	}
 
@@ -344,7 +337,6 @@ process_cleanup (void) {
 void
 process_activate (struct thread *next) {
 	/* Activate thread's page tables. */
-	// printf("check fault\n");
 	pml4_activate (next->pml4);
 
 	/* Set thread's kernel stack for use in processing interrupts. */
@@ -461,7 +453,6 @@ load (const char *file_name, struct intr_frame *if_) {
 	
 	// 파일이 존재하지 않는다면 실패 메세지를 출력하고 함수를 종료한다.
 	if (file == NULL) {
-		printf ("load: %s: open failed\n", file_name);
 		goto done;
 	}
 
@@ -475,7 +466,6 @@ load (const char *file_name, struct intr_frame *if_) {
 			|| ehdr.e_phnum > 1024)                      // ELF 파일 프로그램 헤더의 개수 필드를 검사한다.
 	{
 		// 위 조건에 맞는 ELF 파일이 아닌 경우에 오류 출력 후 함수 종료.
-		printf ("load: %s: error loading executable\n", file_name);
 		goto done;
 	}
 
@@ -596,8 +586,6 @@ load (const char *file_name, struct intr_frame *if_) {
 	if_->R.rdi = argc;
 	if_->R.rsi = if_->rsp;
 
-	// printf("\n%lld\n", argc);
-
 	// fake return address
 	if_->rsp -= 8;
 	memset(if_->rsp, 0, 8);
@@ -710,7 +698,6 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 		/* Add the page to the process's address space. */
 		if (!install_page (upage, kpage, writable)) {
-			printf("fail\n");
 			palloc_free_page (kpage);
 			return false;
 		}

@@ -257,7 +257,8 @@ thread_name (void) {
    See the big comment at the top of thread.h for details. */
 struct thread *
 thread_current (void) {
-	struct thread *t = running_thread ();
+	struct thread *t = running_thread ();	
+	// printf("thread_status: %d, thread_name: %s\n" ,t->status,t->name );
 
 	/* Make sure T is really a thread.
 	   If either of these assertions fire, then your thread may
