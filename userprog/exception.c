@@ -159,7 +159,6 @@ page_fault (struct intr_frame *f) {
 	user = (f->error_code & PF_U) != 0;
 
 
-
 #ifdef VM
 	// 만약 Project3를 성공적으로 수행하여 vm_try_handle_falut()를 구현 했다면? 
 	// 아래 코드를 통해서 page fault를 처리한다.

@@ -6,6 +6,7 @@
         "syscall.h": "c",
         "stdio.h": "c",
         "*.inc": "c",
-        "lib.h": "c"
+        "lib.h": "c",
+        "stdbool.h": "c"
     }
 }

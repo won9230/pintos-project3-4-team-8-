@@ -413,8 +413,9 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->magic = THREAD_MAGIC;
 	// t->parent = thread_current();
 	list_init (&t->child_list); 
-	sema_init (&t->p_sema, 0);
-	sema_init (&t->e_sema, 0);
+	sema_init (&t->wait_sema, 0);
+	sema_init (&t->exit_sema, 0);
+	sema_init (&t->load_sema, 0);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should

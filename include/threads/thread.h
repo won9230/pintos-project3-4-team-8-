@@ -95,14 +95,16 @@ struct thread {
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
+	struct intr_frame fork_tf;
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	struct list child_list;
 	struct thread *parent;				/* parent thread */
 	
-	struct semaphore p_sema;
-	struct semaphore e_sema;
+	struct semaphore load_sema;
+	struct semaphore wait_sema;
+	struct semaphore exit_sema;
 	int exit_status;
 	struct list_elem p_elem;			/* Process element */
 	uint64_t *pml4;                     /* Page map level 4 */

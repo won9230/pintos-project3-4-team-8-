@@ -10,6 +10,7 @@
 #include "threads/init.h"
 #include "include/threads/vaddr.h"
 #include "userprog/process.h"
+#include "threads/thread.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -61,7 +62,7 @@ void syscall_handler (struct intr_frame *f) {
 			f -> R.rax = write(f->R.rdi, f->R.rsi, f->R.rdx);
 			break;
 		case SYS_FORK:
-			f -> R.rax = fork(f->R.rdi);
+			f -> R.rax = fork(f->R.rdi, f);
 			break;
 		case SYS_WAIT:
 			f->R.rax = wait(f->R.rdi);
@@ -112,10 +113,9 @@ void exit(int status) {
  * fork
  * @param thread_name
 */
-pid_t fork (const char *thread_name) {
-	struct thread *curr = thread_current();
+pid_t fork (const char *thread_name, struct intr_frame* if_ ) {
 
-	return process_fork(thread_name, &curr->tf);
+	return process_fork(thread_name, if_);
 }
 
 /**
@@ -131,7 +131,8 @@ int exec (const char *file) {
  * @param pid_t
 */
 int wait (pid_t pid) {
-	return process_wait((pid_t)pid);
+
+	return process_wait(pid);
 }
 
 /* 파일 관련 시스템 콜 */

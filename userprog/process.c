@@ -74,6 +74,7 @@ process_create_initd (const char *file_name) {
 
 	/* Create a new thread to execute FILE_NAME. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
+	
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
 
@@ -97,9 +98,13 @@ initd (void *f_name) {
 /* Clones the current process as `name`. Returns the new process's thread id, or
  * TID_ERROR if the thread cannot be created. */
 tid_t
-process_fork (const char *name, struct intr_frame *if_ UNUSED) {
+process_fork (const char *name, struct intr_frame *if_ ) {
 	/* Clone current thread to new thread.*/
-	return thread_create (name, PRI_DEFAULT, __do_fork, thread_current ());
+	memcpy (&thread_current()->fork_tf, if_, sizeof (struct intr_frame));
+	
+	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, thread_current ());
+	sema_down(&thread_current()->load_sema);
+	return tid;
 }
 
 #ifndef VM
@@ -113,17 +118,15 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	void *newpage;
 	bool writable;
 
+	/* 1. TODO: If the parent_page is kernel page, then return immediately. */
 	if(!is_correct_pointer(va)){
 		return true;
 	}
 
-	/* 1. TODO: If the parent_page is kernel page, then return immediately. */
-	if (pte == base_pml4) {
-		return false;
-	}
-
 	/* 2. Resolve VA from the parent's page map level 4. */
 	parent_page = pml4_get_page (parent->pml4, va);
+	if(parent_page ==NULL)
+		return false;
 
 	/* 3. TODO: Allocate new PAL_USER page for the child and set result to
 	 *    TODO: NEWPAGE. */
@@ -137,11 +140,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	 *    TODO: according to the result). */	
 	memcpy(newpage, parent_page, PGSIZE);
 
-	if(is_writable(pte)) {
-		writable = true;
-	}else {
-		writable = false;
-	}
+	writable = is_writable(pte);
 
 	/* 5. Add new page to child's page table at address VA with WRITABLE
 	 *    permission. */
@@ -166,13 +165,13 @@ __do_fork (void *aux) {
 	struct thread *current = thread_current();     // child thread
 
 	/* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
-	struct intr_frame *parent_if;
-	parent_if = &parent->tf;
+	struct intr_frame *parent_if = &parent->fork_tf;
 
 	bool succ = true;
 
 	/* 1. Read the cpu context to local stack. */
 	memcpy (&if_, parent_if, sizeof (struct intr_frame));
+	if_.R.rax = 0;
 
 	/* 2. Duplicate PT */
 	current->pml4 = pml4_create();
@@ -196,6 +195,7 @@ __do_fork (void *aux) {
 	 * TODO:       from the fork() until this function successfully duplicates
 	 * TODO:       the resources of parent.*/
 	
+	sema_up(&parent->load_sema);
 	process_init ();
 
 	/* Finally, switch to the newly created process. */
@@ -256,19 +256,19 @@ process_wait (tid_t child_tid UNUSED) {
 	struct thread *child_thread = find_child(&curr->child_list, child_tid);			// 자식 스레드가 존재한다면? 자식 스레드 
 	
 	// 만약 자식 스레드가 존재한다면? 끝날 때까지 기다린다.
-	if (child_thread != NULL){
-		sema_down(&child_thread->p_sema);
-		int exit_status = curr->exit_status;
-		list_remove(&child_thread->p_elem); // 자식 스레드를 자식 스레드 리스트에서 제거
-		sema_up(&child_thread->e_sema);
-		return exit_status;
+	if (child_thread == NULL){
+		return -1;
 	}
 
+	sema_down(&child_thread->wait_sema);
+	int exit_status = child_thread->exit_status;
+	list_remove(&child_thread->p_elem); // 자식 스레드를 자식 스레드 리스트에서 제거
+	sema_up(&child_thread->exit_sema);
+	return exit_status;
 	// wait 함수가 실패할 경우에는 -1을 반환한다.
 	// 아래 두 가지 경우일 때에도 -1을 반환한다.
 	// 1. child_tid의 스레드가 현재 스레드의 직접적인 자식 스레드가 아닌 경우.
 	// 2. child_tid의 wait()이 이미 호출된 경우.
-	return -1;
 }
 
 struct thread* find_child(struct list *c_list, tid_t child_tid) {
@@ -293,8 +293,8 @@ process_exit (void) {
 	 * TODO: We recommend you to implement process resource cleanup here. */
 	
 	process_cleanup ();
-	sema_up(&curr->p_sema);
-	sema_down(&curr->e_sema);
+	sema_up(&curr->wait_sema);
+	sema_down(&curr->exit_sema);
 }
 
 /* Free the current process's resources. */
