@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "threads/synch.h"
 #include "threads/interrupt.h"
+#include "filesys/file.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -109,6 +110,8 @@ struct thread {
 	struct list_elem p_elem;			/* Process element */
 	uint64_t *pml4;                     /* Page map level 4 */
 
+	struct file **fdt;
+	int next_fd;
 #endif
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */

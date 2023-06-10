@@ -35,9 +35,9 @@ int is_correct_pointer(const void *addr) {
 		return 0;
 	}
 
-	// if(pml4_get_page(curr->pml4, addr) == NULL) {
-	// 	return 0;
-	// }
+	if(pml4_get_page(curr->pml4, addr) == NULL) {
+		return 0;
+	}
 
 	return 1;
 }
@@ -102,7 +102,7 @@ process_fork (const char *name, struct intr_frame *if_ ) {
 	/* Clone current thread to new thread.*/
 	memcpy (&thread_current()->fork_tf, if_, sizeof (struct intr_frame));
 	
-	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, thread_current ());
+	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, thread_current());
 	sema_down(&thread_current()->load_sema);
 	return tid;
 }
@@ -130,7 +130,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 
 	/* 3. TODO: Allocate new PAL_USER page for the child and set result to
 	 *    TODO: NEWPAGE. */
-	newpage = palloc_get_page(PAL_ZERO);
+	newpage = palloc_get_page(PAL_ZERO | PAL_USER);
 	if(newpage == NULL) {
 		return false;
 	}
@@ -293,6 +293,7 @@ process_exit (void) {
 	 * TODO: We recommend you to implement process resource cleanup here. */
 	
 	process_cleanup ();
+	palloc_free_page(curr->fdt);
 	sema_up(&curr->wait_sema);
 	sema_down(&curr->exit_sema);
 }

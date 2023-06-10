@@ -14,4 +14,6 @@ void process_exit (void);
 void process_activate (struct thread *next);
 struct thread* find_child(struct list *, tid_t);
 
+int is_correct_pointer(const void *addr);
+
 #endif /* userprog/process.h */

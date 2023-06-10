@@ -67,6 +67,18 @@ void syscall_handler (struct intr_frame *f) {
 		case SYS_WAIT:
 			f->R.rax = wait(f->R.rdi);
 			break;
+		case SYS_CREATE:
+			f->R.rax = create(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_REMOVE:
+			f->R.rax = remove(f->R.rdi);
+			break;
+		case SYS_OPEN:
+			f->R.rax = open(f->R.rdi);
+			break;
+		case SYS_READ:
+			f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
+			break;
 		default:
 			break;
 	}
@@ -151,3 +163,78 @@ int write (int fd, const void *buffer, unsigned size) {
 		return size;
 	}
 };
+
+/**
+ * create
+ * @param file
+ * @param initial_size
+*/
+bool create(const char *file, unsigned initial_size) {
+	if(!is_correct_pointer(file)) {
+		exit(-1);
+	}
+
+	// 2. Use bool filesys_create(const char *name, off_t initial_size).
+	// 3. Return true if it is succeeded or false if it is not.
+	return filesys_create(file, initial_size);
+}
+
+/**
+ * remove
+ * @param file
+*/
+bool remove (const char *file) {
+	// Use bool filesys_remove(const char *name).
+	if(!is_correct_pointer(file)) {
+		exit(-1);
+	}
+
+	// Return true if it is succeeded or false if it is not.
+	return filesys_remove(file);
+}
+
+/**
+ * open
+ * @param file
+*/
+int open (const char *file) {
+	// if(!is_correct_pointer(file)) {
+	// 	exit(-1);
+	// }
+	struct thread *curr = thread_current();
+	struct file *now_file = file_open(file);
+
+	int fd;
+
+	if(now_file == NULL) {
+		return -1;
+	}
+
+	for (int i = 2; i < 64; i++) {
+		if(curr->fdt[i] == 0) {
+			curr->fdt[i] = i;
+			fd = i;
+			break;
+		}
+	}
+
+	return fd;
+}
+
+/**
+ * read
+ * @param fd
+ * @param buffer
+ * @param length
+*/
+int read (int fd, void *buffer, unsigned length) {
+	if(!is_correct_pointer(buffer)) {
+		exit(-1);
+	}
+	
+	//	Read size bytes from the file open as fd into buffer.
+	//	Return the number of bytes actually read (0 at end of file), or -1 if fails.
+	//	if fd is 0, it reads from keyboard using input_getc(), otherwise reads from file using file_read() function.
+
+
+}
