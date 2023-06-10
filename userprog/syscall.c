@@ -11,6 +11,7 @@
 #include "include/threads/vaddr.h"
 #include "userprog/process.h"
 #include "threads/thread.h"
+#include "threads/palloc.h"
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -66,6 +67,9 @@ void syscall_handler (struct intr_frame *f) {
 			break;
 		case SYS_WAIT:
 			f->R.rax = wait(f->R.rdi);
+			break;
+		case SYS_EXEC:
+			f->R.rax = exec(f->R.rdi);
 			break;
 		default:
 			break;
@@ -123,7 +127,15 @@ pid_t fork (const char *thread_name, struct intr_frame* if_ ) {
  * @param file
 */
 int exec (const char *file) {
-	process_exec(file);
+	if(!is_correct_pointer(file))
+		exit(-1);
+	char * fn_copy = palloc_get_page(PAL_ZERO);
+	if(fn_copy == NULL)
+		exit(-1);
+	strlcpy(fn_copy, file, PGSIZE);
+	if(process_exec(fn_copy)== -1){
+		exit(-1);
+	}
 }
 
 /**
@@ -131,7 +143,6 @@ int exec (const char *file) {
  * @param pid_t
 */
 int wait (pid_t pid) {
-
 	return process_wait(pid);
 }
 

@@ -180,6 +180,7 @@ tid_t
 thread_create (const char *name, int priority, thread_func *function, void *aux) {
 	struct thread *t;
 	tid_t tid;
+	struct thread* curr = thread_current();
 
 	ASSERT (function != NULL);
 
@@ -190,8 +191,8 @@ thread_create (const char *name, int priority, thread_func *function, void *aux)
 
 	/* Initialize thread. */
 	init_thread (t, name, priority);
-	t->parent= thread_current();
-	list_push_back(&t->parent->child_list , &t->p_elem);
+	t->parent= curr;
+	list_push_back(&curr->child_list , &t->p_elem);
 	tid = t->tid = allocate_tid ();
 
 	/* Call the kernel_thread if it scheduled.

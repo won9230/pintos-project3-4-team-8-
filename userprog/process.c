@@ -29,27 +29,18 @@ static void __do_fork (void *);
 
 
 int is_correct_pointer(const void *addr) {
-	struct thread *curr = thread_current();
-
-	if(is_kernel_vaddr(addr) || addr == NULL) {
-		return 0;
-	}
-
-	// if(pml4_get_page(curr->pml4, addr) == NULL) {
-	// 	return 0;
-	// }
-
-	return 1;
+	if (addr == NULL)
+        exit(-1);
+    if (!is_user_vaddr(addr))
+        exit(-1);
+    if (pml4_get_page(thread_current()->pml4, addr) == NULL)
+        exit(-1);
 }
 
 /* General process initializer for initd and other process. */
 static void
 process_init (void) {
 	struct thread *current = thread_current ();
-
-	if(current != current->parent){
-		list_push_back(&current -> parent -> child_list, &current->p_elem);
-	}
 }
 
 /* Starts the first userland program, called "initd", loaded from FILE_NAME.
@@ -119,9 +110,8 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	bool writable;
 
 	/* 1. TODO: If the parent_page is kernel page, then return immediately. */
-	if(!is_correct_pointer(va)){
-		return true;
-	}
+	 if (is_kernel_vaddr(va))
+        return true;
 
 	/* 2. Resolve VA from the parent's page map level 4. */
 	parent_page = pml4_get_page (parent->pml4, va);
@@ -187,21 +177,20 @@ __do_fork (void *aux) {
 	if (!pml4_for_each (parent->pml4, duplicate_pte, parent))
 		goto error;
 #endif
-	// current->parent = parent;
-	// list_push_back(&parent->child_list, &current->p_elem);
 	/* TODO: Your code goes here.
 	 * TODO: Hint) To duplicate the file object, use `file_duplicate`
 	 * TODO:       in include/filesys/file.h. Note that parent should not return
 	 * TODO:       from the fork() until this function successfully duplicates
 	 * TODO:       the resources of parent.*/
 	
-	sema_up(&parent->load_sema);
 	process_init ();
+	sema_up(&parent->load_sema);
 
 	/* Finally, switch to the newly created process. */
 	if (succ)
 		do_iret (&if_);
 error:
+ 	sema_up(&current->load_sema);
 	thread_exit ();
 }
 
@@ -225,7 +214,7 @@ process_exec (void *f_name) {
 
 	/* And then load the binary */
 	success = load (file_name, &_if);
-
+	// hex_dump(_if.rsp,_if.rsp, USER_STACK-_if.rsp,true);
 	/* If load failed, quit. */
 	palloc_free_page (file_name);
 	if (!success)
@@ -253,7 +242,8 @@ process_wait (tid_t child_tid UNUSED) {
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
 	struct thread *curr = thread_current(); // 현재 스레드
-	struct thread *child_thread = find_child(&curr->child_list, child_tid);			// 자식 스레드가 존재한다면? 자식 스레드 
+	struct thread *child_thread = find_child(child_tid);			// 자식 스레드가 존재한다면? 자식 스레드 
+	
 	
 	// 만약 자식 스레드가 존재한다면? 끝날 때까지 기다린다.
 	if (child_thread == NULL){
@@ -261,8 +251,8 @@ process_wait (tid_t child_tid UNUSED) {
 	}
 
 	sema_down(&child_thread->wait_sema);
+	list_remove(&child_thread->p_elem);  // 자식 스레드를 자식 스레드 리스트에서 제거
 	int exit_status = child_thread->exit_status;
-	list_remove(&child_thread->p_elem); // 자식 스레드를 자식 스레드 리스트에서 제거
 	sema_up(&child_thread->exit_sema);
 	return exit_status;
 	// wait 함수가 실패할 경우에는 -1을 반환한다.
@@ -271,11 +261,12 @@ process_wait (tid_t child_tid UNUSED) {
 	// 2. child_tid의 wait()이 이미 호출된 경우.
 }
 
-struct thread* find_child(struct list *c_list, tid_t child_tid) {
-	for (struct list_elem* e = list_begin (c_list); e != list_end (c_list); e = list_next (e)) {
+struct thread* find_child(tid_t child_tid) {
+	struct list *child_list = &thread_current() -> child_list;
+	struct list_elem* e = list_begin (child_list);
+	for (; e != list_end (child_list); e = list_next (e)) {
 		struct thread *child_thread =list_entry(e, struct thread, p_elem);
-		
-		if (child_thread->tid== child_tid){
+		if (child_thread->tid == child_tid){
 			return child_thread;
 		}
  	}
@@ -430,9 +421,7 @@ load (const char *file_name, struct intr_frame *if_) {
 
 	while (token != NULL) {
 		argv[argc] = token;
-		// strlcpy(argv[argc], token, MAX_STR_LEN);
 		argc++;
-
 		token = strtok_r(NULL, " ", &save_ptr);
 	}
 
@@ -453,6 +442,7 @@ load (const char *file_name, struct intr_frame *if_) {
 	
 	// 파일이 존재하지 않는다면 실패 메세지를 출력하고 함수를 종료한다.
 	if (file == NULL) {
+		printf("load: %s: open failed\n", argv[0]);
 		goto done;
 	}
 

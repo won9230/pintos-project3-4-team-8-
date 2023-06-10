@@ -7,6 +7,9 @@
         "stdio.h": "c",
         "*.inc": "c",
         "lib.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "thread.h": "c",
+        "pte.h": "c",
+        "palloc.h": "c"
     }
 }
