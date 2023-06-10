@@ -97,6 +97,7 @@ struct thread {
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 	struct intr_frame fork_tf;
+	struct file **fdt;
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
@@ -110,8 +111,8 @@ struct thread {
 	struct list_elem p_elem;			/* Process element */
 	uint64_t *pml4;                     /* Page map level 4 */
 
-	struct file **fdt;
 	int next_fd;
+	struct list file_list;
 #endif
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */

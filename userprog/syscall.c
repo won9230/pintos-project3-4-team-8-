@@ -11,6 +11,8 @@
 #include "include/threads/vaddr.h"
 #include "userprog/process.h"
 #include "threads/thread.h"
+#include "filesys/file.h"
+
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -198,11 +200,14 @@ bool remove (const char *file) {
  * @param file
 */
 int open (const char *file) {
-	// if(!is_correct_pointer(file)) {
-	// 	exit(-1);
-	// }
+	if(!is_correct_pointer(file)) {
+		exit(-1);
+	}
+
 	struct thread *curr = thread_current();
-	struct file *now_file = file_open(file);
+	struct file *now_file = filesys_open(file);
+
+	// printf("now file is: %s\n\n", file);
 
 	int fd;
 
@@ -210,9 +215,9 @@ int open (const char *file) {
 		return -1;
 	}
 
-	for (int i = 2; i < 64; i++) {
+	for (int i = 2; i < 128; i++) {
 		if(curr->fdt[i] == 0) {
-			curr->fdt[i] = i;
+			curr->fdt[i] = now_file;
 			fd = i;
 			break;
 		}
@@ -228,13 +233,51 @@ int open (const char *file) {
  * @param length
 */
 int read (int fd, void *buffer, unsigned length) {
+
 	if(!is_correct_pointer(buffer)) {
+
 		exit(-1);
 	}
-	
 	//	Read size bytes from the file open as fd into buffer.
 	//	Return the number of bytes actually read (0 at end of file), or -1 if fails.
 	//	if fd is 0, it reads from keyboard using input_getc(), otherwise reads from file using file_read() function.
+	if (fd == 0) {
+		return input_getc();
+	}
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+	int now_file_size = filesize(fd);
+	int size;
 
+	// printf("now file size is %d\n\n", now_file_size);
+	// printf("now file: %d\n\n", fd);
 
+	if (now_file != NULL) {
+		if (now_file_size <= length) {
+			size = file_read(now_file, buffer, now_file_size);
+
+			return 0;
+		}
+
+		size = file_read(now_file, buffer, length);
+
+		return size;
+	}
+
+	return -1;
 }
+
+/**
+ * filesize
+ * @param fd
+*/
+int filesize (int fd) {
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+	
+	off_t now_size = file_length(now_file);
+
+	printf("now size is %d\n\n", now_size);
+
+	return now_size;
+};

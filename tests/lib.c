@@ -135,6 +135,8 @@ check_file_handle (int fd,
       if (block_size > sizeof block)
         block_size = sizeof block;
 
+      msg("baaaaaaaaaam\n\n");
+
       ret_val = read (fd, block, block_size);
       if (ret_val != block_size)
         fail ("read of %zu bytes at offset %zu in \"%s\" returned %zu",
