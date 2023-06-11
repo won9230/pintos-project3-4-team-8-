@@ -121,6 +121,8 @@ check_file_handle (int fd,
      may still be able to get more information by reading the
      file. */
   file_size = filesize (fd);
+
+  
   if (file_size != size)
     msg ("size of %s (%zu) differs from expected (%zu)",
           file_name, file_size, size);
@@ -134,8 +136,6 @@ check_file_handle (int fd,
       block_size = size - ofs;
       if (block_size > sizeof block)
         block_size = sizeof block;
-
-      msg("baaaaaaaaaam\n\n");
 
       ret_val = read (fd, block, block_size);
       if (ret_val != block_size)
