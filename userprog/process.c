@@ -31,10 +31,12 @@ static void __do_fork (void *);
 int is_correct_pointer(const void *addr) {
 	struct thread *curr = thread_current();
 
-	if(is_kernel_vaddr(addr) || addr == NULL) {
+	if(is_kernel_vaddr(addr)) {
 		return 0;
 	}
-
+	if(addr == NULL){
+		return 0;
+	}
 	if(pml4_get_page(curr->pml4, addr) == NULL) {
 		return 0;
 	}

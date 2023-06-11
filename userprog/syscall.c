@@ -12,6 +12,7 @@
 #include "userprog/process.h"
 #include "threads/thread.h"
 #include "filesys/file.h"
+#include "filesys/filesys.h"
 #include "threads/palloc.h"
 
 
@@ -158,21 +159,6 @@ int wait (pid_t pid) {
 /* 파일 관련 시스템 콜 */
 
 /**
- * write
- * @param fd
- * @param buffer
- * @param size
-*/
-int write (int fd, const void *buffer, unsigned size) {
-	// 만약 fd = 1 이면 putbuf() 사용해서 출력
-	if(fd == 1) {
-		putbuf(buffer, size);
-
-		return size;
-	}
-};
-
-/**
  * create
  * @param file
  * @param initial_size
@@ -213,12 +199,6 @@ int open (const char *file) {
 	struct thread *curr = thread_current();
 	struct file *now_file = filesys_open(file);
 	struct file **fdt = curr->fdt;
-	// printf("now file size is %p\n", now_file);
-
-	// struct file *now_file = palloc_get_page(0);
-	// memcpy(now_file,filesys_open(file), PGSIZE);
-
-	// printf("now file is: %s\n\n", file);
 
 	int fd = -1;
 
@@ -230,65 +210,16 @@ int open (const char *file) {
 		if(fdt[i] == 0) {
 			fdt[i] = now_file;
 			fd = i;
+			curr->next_fd = i + 1;
 			break;
 		}
 	}
 
+	if(fd == -1) {
+		file_close(now_file);
+	}
+
 	return fd;
-}
-
-/**
- * read
- * @param fd
- * @param buffer
- * @param length
-*/
-int read (int fd, void *buffer, unsigned length) {
-	if(!is_correct_pointer(buffer)) {
-		return -1;
-	}
-
-	if (fd < 0 || fd >=128) {
-		return -1;
-	}
-
-	struct thread *curr = thread_current();
-	struct file *now_file = curr->fdt[fd];
-	char *ptr = (char *)buffer;
-	int size = 0;
-
-	if(now_file == 0) {
-		return -1;
-	}
-
-	if (fd == 0) {
-		// STANDARD INPUT
-
-		lock_acquire(&filesys_lock);
-
-		for (int i = 0; i < length; i++)
-		{
-			*ptr++ = input_getc();
-			size++;
-		}
-
-		lock_release(&filesys_lock);
-	}else if (fd == 1) {
-		// STANDARD OUTPUT
-		lock_acquire(&filesys_lock);
-
-		return -1;
-	}else {
-		lock_acquire(&filesys_lock);
-		size = file_read(now_file, buffer, length);
-		lock_release(&filesys_lock);
-	}
-
-
-	return size;
-	//	Read size bytes from the file open as fd into buffer.
-	//	Return the number of bytes actually read (0 at end of file), or -1 if fails.
-	//	if fd is 0, it reads from keyboard using input_getc(), otherwise reads from file using file_read() function.
 }
 
 /**
@@ -302,13 +233,90 @@ int filesize (int fd) {
 
 	struct thread *curr = thread_current();
 	struct file **fdt = curr->fdt;
-	struct file *now_file = &fdt[fd];
-
-	printf("now file size is %p\n", now_file);
+	struct file *now_file = fdt[fd];
 
 	if(now_file == 0) {
 		return -1;
 	}
 
 	return file_length(now_file);
+};
+
+/**
+ * read
+ * @param fd
+ * @param buffer
+ * @param length
+*/
+int read (int fd, void *buffer, unsigned length) {
+	if(!is_correct_pointer(buffer)) {
+		exit(-1);
+	}
+
+	if (fd < 0 || fd >=128) {
+		return -1;
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+	char *ptr = buffer;
+	int size = 0;
+
+	if(now_file == 0) {
+		return -1;
+	}
+
+	if (fd == 0) {
+		// STANDARD INPUT
+		char key;
+
+		for (int size = 0; size < length; size++)
+		{
+			key = input_getc();
+			*ptr++ = key;
+
+			if(key == '\0') {
+				break;
+			}
+		}
+	}else if (fd == 1) {
+		// STANDARD OUTPUT
+		return -1;
+	}else {
+		lock_acquire(&filesys_lock);
+		size = file_read(now_file, buffer, length);
+		lock_release(&filesys_lock);
+	}
+
+	return size;
+}
+
+/**
+ * write
+ * @param fd
+ * @param buffer
+ * @param size
+*/
+int write (int fd, const void *buffer, unsigned size) {
+	if(!is_correct_pointer(buffer)) {
+		exit(-1);
+	}
+
+	if(fd <= 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	int written_size = 0;
+
+	// 만약 fd = 1 이면 putbuf() 사용해서 출력
+	if(fd == 1) {
+		putbuf(buffer, size);
+	}else {
+		struct thread *curr = thread_current();
+		struct file *now_file = curr->fdt[fd];
+
+		written_size = file_write(now_file, buffer, size);
+	}
+
+	return written_size;
 };

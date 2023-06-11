@@ -193,7 +193,15 @@ thread_create (const char *name, int priority, thread_func *function, void *aux)
 	t->parent= thread_current();
 	list_push_back(&t->parent->child_list , &t->p_elem);
 	tid = t->tid = allocate_tid ();
+
+	/* initialize file descriptor table */
 	t->fdt = palloc_get_page(PAL_ZERO);
+	if(t->fdt == NULL) {
+		return TID_ERROR;
+	}
+	t->fdt[0] = 1;
+	t->fdt[1] = 2;
+	t->next_fd = 2;
 
 	/* Call the kernel_thread if it scheduled.
 	 * Note) rdi is 1st argument, and rsi is 2nd argument. */
@@ -414,7 +422,6 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->magic = THREAD_MAGIC;
 	// t->parent = thread_current();
 	list_init (&t->child_list); 
-	list_init (&t->file_list);
 	sema_init (&t->wait_sema, 0);
 	sema_init (&t->exit_sema, 0);
 	sema_init (&t->load_sema, 0);
