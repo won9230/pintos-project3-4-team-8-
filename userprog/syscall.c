@@ -88,6 +88,12 @@ void syscall_handler (struct intr_frame *f) {
 		case SYS_FILESIZE:
 			f->R.rax = filesize(f->R.rdi);
 			break;
+		case SYS_SEEK:
+			seek(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_TELL:
+			f->R.rax = tell(f->R.rdi);
+			break;
 		default:
 			break;
 	}
@@ -319,4 +325,47 @@ int write (int fd, const void *buffer, unsigned size) {
 	}
 
 	return written_size;
+};
+
+/**
+ * seek
+ * @param fd
+ * @param position
+*/
+void seek (int fd, unsigned position) {
+	if (fd < 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+
+	file_seek(now_file, position);
+};
+
+/**
+ * tell
+ * @param fd
+*/
+unsigned tell (int fd) {
+	if (fd < 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+
+	return file_tell(now_file);
+};
+
+/**
+ * close
+ * @param fd
+*/
+void close (int fd) {
+	if (fd < 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	file_close(fd);
 };
