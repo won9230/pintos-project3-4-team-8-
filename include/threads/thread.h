@@ -106,9 +106,9 @@ struct thread {
 	struct semaphore exit_sema;
 	int exit_status;
 	struct list_elem p_elem;			/* Process element */
+	struct file* running_file;
 	
 	struct file **fdt;
-	int next_fd;
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */

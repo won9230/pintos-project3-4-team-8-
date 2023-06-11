@@ -56,7 +56,6 @@ void syscall_init (void) {
 void syscall_handler (struct intr_frame *f) {
 	// TODO: Your implementation goes here.
 	// printf ("system call!\n");
-
 	switch (f -> R.rax) {
 		case SYS_HALT:
 			halt();
@@ -75,6 +74,7 @@ void syscall_handler (struct intr_frame *f) {
 			break;
 		case SYS_EXEC:
 			f->R.rax = exec(f->R.rdi);
+			break;
 		case SYS_CREATE:
 			f->R.rax = create(f->R.rdi, f->R.rsi);
 			break;
@@ -128,8 +128,7 @@ void exit(int status) {
  * fork
  * @param thread_name
 */
-pid_t fork (const char *thread_name, struct intr_frame* if_ ) {
-
+tid_t fork (const char *thread_name, struct intr_frame* if_ ) {
 	return process_fork(thread_name, if_);
 }
 
@@ -194,9 +193,9 @@ bool remove (const char *file) {
 */
 int open (const char *file) {
 	if(!is_correct_pointer(file)) {
-		exit(-1);
+		return -1;
 	}
-
+	lock_acquire(&filesys_lock);
 	struct thread *curr = thread_current();
 	struct file *now_file = filesys_open(file);
 	struct file **fdt = curr->fdt;
@@ -204,6 +203,7 @@ int open (const char *file) {
 	int fd = -1;
 
 	if(now_file == NULL) {
+		lock_release(&filesys_lock);
 		return -1;
 	}
 
@@ -211,14 +211,13 @@ int open (const char *file) {
 		if(fdt[i] == 0) {
 			fdt[i] = now_file;
 			fd = i;
-			curr->next_fd = i + 1;
 			break;
 		}
 	}
-
 	if(fd == -1) {
 		file_close(now_file);
 	}
+	lock_release(&filesys_lock);
 
 	return fd;
 }
@@ -359,9 +358,11 @@ unsigned tell (int fd) {
  * @param fd
 */
 void close (int fd) {
+	struct thread* curr = thread_current();
 	if (fd < 0 || fd >= 128) {
 		exit(-1);
 	}
 
-	file_close(fd);
+	file_close(curr->fdt[fd]);
+	thread_current()->fdt[fd] = NULL;
 };

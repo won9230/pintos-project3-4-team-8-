@@ -98,10 +98,21 @@ initd (void *f_name) {
 tid_t
 process_fork (const char *name, struct intr_frame *if_ ) {
 	/* Clone current thread to new thread.*/
+	
 	memcpy (&thread_current()->fork_tf, if_, sizeof (struct intr_frame));
 	
 	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, thread_current());
+	if(tid == TID_ERROR)
+		return TID_ERROR;
+	struct thread * child = find_child(tid);
 	sema_down(&thread_current()->load_sema);
+	
+
+	if (child->exit_status == TID_ERROR)
+	{
+		// 자식 프로세스의 pid가 아닌 TID_ERROR를 반환한다.
+		return TID_ERROR;
+	}
 	return tid;
 }
 
@@ -207,8 +218,8 @@ __do_fork (void *aux) {
 	if (succ)
 		do_iret (&if_);
 error:
- 	sema_up(&current->load_sema);
-	thread_exit ();
+ 	sema_up(&parent->load_sema);
+	exit(-1);
 }
 
 /* Switch the current execution context to the f_name.
@@ -299,9 +310,13 @@ process_exit (void) {
 	 * TODO: Implement process termination message (see
 	 * TODO: project2/process_termination.html).
 	 * TODO: We recommend you to implement process resource cleanup here. */
-	
-	process_cleanup ();
+	for (int i = 2; i < 128; i++){
+        if(curr->fdt[i] != 0)	
+			close(i);
+	}
+	file_close(curr->running_file);
 	palloc_free_page(curr->fdt);
+	process_cleanup ();
 	sema_up(&curr->wait_sema);
 	sema_down(&curr->exit_sema);
 }
@@ -463,6 +478,9 @@ load (const char *file_name, struct intr_frame *if_) {
 		printf("load: %s: open failed\n", argv[0]);
 		goto done;
 	}
+	t->running_file =file;
+	file_deny_write(file);
+	
 
 	// 새롭게 실행 할 파일의 헤더를 읽고 유효성을 검증한다.
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -606,7 +624,7 @@ done:
 	// 오류가 발생했을 때 OR 처리가 완료되었을 때 실행된다.
 
 	// 파일을 닫고, 성공 여부를 반환한다.
-	file_close (file);
+	// file_close (file);
 	return success;
 }
 

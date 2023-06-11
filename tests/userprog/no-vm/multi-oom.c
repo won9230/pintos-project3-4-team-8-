@@ -117,7 +117,6 @@ make_children (void) {
         fail ("Unreachable");
       }
     }
-
     snprintf (child_name, sizeof child_name, "%s_%d_%s", "child", i, "O");
     pid = fork(child_name);
     if (pid < 0) {
@@ -128,7 +127,6 @@ make_children (void) {
       break;
     }
   }
-
   int depth = wait (pid);
   if (depth < 0)
 	  fail ("Should return > 0.");

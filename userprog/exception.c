@@ -144,6 +144,7 @@ page_fault (struct intr_frame *f) {
 	 */
 
 	fault_addr = (void *) rcr2();
+	
 
 	/*
 	 * 인터럽트를 다시 활성화 한다. 
@@ -170,6 +171,7 @@ page_fault (struct intr_frame *f) {
 	/* page_fault_cnt 변수를 증가시켜 페이지 부재 횟수를 기록한다.*/
 	page_fault_cnt++;
 
+	exit(-1);
 	/* 
 	 * 페이지 부재가 발생한 상황을 콘솔에 출력한다. 
 	 * 발생한 페이지 부재의 주소, 
@@ -185,6 +187,5 @@ page_fault (struct intr_frame *f) {
 
 	// 현재 실행 중인 프로세스를 죵료한다. (page fault 발생한 경우 프로세스를 종료하는 것으로 처리한다.)
 	kill (f);
-	exit(-1);
 }
 
