@@ -10,6 +10,7 @@
         "stdbool.h": "c",
         "thread.h": "c",
         "pte.h": "c",
-        "palloc.h": "c"
+        "palloc.h": "c",
+        "main.h": "c"
     }
 }

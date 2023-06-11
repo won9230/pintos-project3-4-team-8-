@@ -102,20 +102,6 @@ void syscall_handler (struct intr_frame *f) {
 
 }
 
-// int is_correct_pointer(const void *addr) {
-// 	struct thread *curr = thread_current();
-
-// 	if(is_kernel_vaddr(addr) || addr == NULL) {
-// 		return 0;
-// 	}
-
-// 	if(pml4_get_page(curr->pml4, addr) == NULL) {
-// 		return 0;
-// 	}
-
-// 	return 1;
-// }
-
 /* 프로세스 관련 시스템 콜 */
 
 /**
@@ -264,6 +250,7 @@ int filesize (int fd) {
  * @param length
 */
 int read (int fd, void *buffer, unsigned length) {
+	
 	if(!is_correct_pointer(buffer)) {
 		exit(-1);
 	}
