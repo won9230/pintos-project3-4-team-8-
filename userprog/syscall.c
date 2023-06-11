@@ -11,8 +11,13 @@
 #include "include/threads/vaddr.h"
 #include "userprog/process.h"
 #include "threads/thread.h"
+#include "filesys/file.h"
+#include "filesys/filesys.h"
 #include "threads/palloc.h"
 
+
+
+struct lock filesys_lock; 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
 
@@ -36,7 +41,7 @@ void syscall_init (void) {
 	write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48  |
 			((uint64_t)SEL_KCSEG) << 32);
 	write_msr(MSR_LSTAR, (uint64_t) syscall_entry);
-
+	lock_init(&filesys_lock);
 	/* The interrupt service rountine should not serve any interrupts
 	 * until the syscall_entry swaps the userland stack to the kernel
 	 * mode stack. Therefore, we masked the FLAG_FL. */
@@ -70,6 +75,26 @@ void syscall_handler (struct intr_frame *f) {
 			break;
 		case SYS_EXEC:
 			f->R.rax = exec(f->R.rdi);
+		case SYS_CREATE:
+			f->R.rax = create(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_REMOVE:
+			f->R.rax = remove(f->R.rdi);
+			break;
+		case SYS_OPEN:
+			f->R.rax = open(f->R.rdi);
+			break;
+		case SYS_READ:
+			f->R.rax = read(f->R.rdi, f->R.rsi, f->R.rdx);
+			break;
+		case SYS_FILESIZE:
+			f->R.rax = filesize(f->R.rdi);
+			break;
+		case SYS_SEEK:
+			seek(f->R.rdi, f->R.rsi);
+			break;
+		case SYS_TELL:
+			f->R.rax = tell(f->R.rdi);
 			break;
 		default:
 			break;
@@ -149,16 +174,207 @@ int wait (pid_t pid) {
 /* 파일 관련 시스템 콜 */
 
 /**
+ * create
+ * @param file
+ * @param initial_size
+*/
+bool create(const char *file, unsigned initial_size) {
+	if(!is_correct_pointer(file)) {
+		exit(-1);
+	}
+
+	// 2. Use bool filesys_create(const char *name, off_t initial_size).
+	// 3. Return true if it is succeeded or false if it is not.
+	return filesys_create(file, initial_size);
+}
+
+/**
+ * remove
+ * @param file
+*/
+bool remove (const char *file) {
+	// Use bool filesys_remove(const char *name).
+	if(!is_correct_pointer(file)) {
+		exit(-1);
+	}
+
+	// Return true if it is succeeded or false if it is not.
+	return filesys_remove(file);
+}
+
+/**
+ * open
+ * @param file
+*/
+int open (const char *file) {
+	if(!is_correct_pointer(file)) {
+		exit(-1);
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = filesys_open(file);
+	struct file **fdt = curr->fdt;
+
+	int fd = -1;
+
+	if(now_file == NULL) {
+		return -1;
+	}
+
+	for (int i = 2; i < 128; i++) {
+		if(fdt[i] == 0) {
+			fdt[i] = now_file;
+			fd = i;
+			curr->next_fd = i + 1;
+			break;
+		}
+	}
+
+	if(fd == -1) {
+		file_close(now_file);
+	}
+
+	return fd;
+}
+
+/**
+ * filesize
+ * @param fd
+*/
+int filesize (int fd) {
+	if (fd < 0 || fd >= 128) {
+		return NULL;
+	}
+
+	struct thread *curr = thread_current();
+	struct file **fdt = curr->fdt;
+	struct file *now_file = fdt[fd];
+
+	if(now_file == 0) {
+		return -1;
+	}
+
+	return file_length(now_file);
+};
+
+/**
+ * read
+ * @param fd
+ * @param buffer
+ * @param length
+*/
+int read (int fd, void *buffer, unsigned length) {
+	if(!is_correct_pointer(buffer)) {
+		exit(-1);
+	}
+
+	if (fd < 0 || fd >=128) {
+		return -1;
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+	char *ptr = buffer;
+	int size = 0;
+
+	if(now_file == 0) {
+		return -1;
+	}
+
+	if (fd == 0) {
+		// STANDARD INPUT
+		char key;
+
+		for (int size = 0; size < length; size++)
+		{
+			key = input_getc();
+			*ptr++ = key;
+
+			if(key == '\0') {
+				break;
+			}
+		}
+	}else if (fd == 1) {
+		// STANDARD OUTPUT
+		return -1;
+	}else {
+		lock_acquire(&filesys_lock);
+		size = file_read(now_file, buffer, length);
+		lock_release(&filesys_lock);
+	}
+
+	return size;
+}
+
+/**
  * write
  * @param fd
  * @param buffer
  * @param size
 */
 int write (int fd, const void *buffer, unsigned size) {
+	if(!is_correct_pointer(buffer)) {
+		exit(-1);
+	}
+
+	if(fd <= 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	int written_size = 0;
+
 	// 만약 fd = 1 이면 putbuf() 사용해서 출력
 	if(fd == 1) {
 		putbuf(buffer, size);
+	}else {
+		struct thread *curr = thread_current();
+		struct file *now_file = curr->fdt[fd];
 
-		return size;
+		written_size = file_write(now_file, buffer, size);
 	}
+
+	return written_size;
+};
+
+/**
+ * seek
+ * @param fd
+ * @param position
+*/
+void seek (int fd, unsigned position) {
+	if (fd < 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+
+	file_seek(now_file, position);
+};
+
+/**
+ * tell
+ * @param fd
+*/
+unsigned tell (int fd) {
+	if (fd < 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	struct thread *curr = thread_current();
+	struct file *now_file = curr->fdt[fd];
+
+	return file_tell(now_file);
+};
+
+/**
+ * close
+ * @param fd
+*/
+void close (int fd) {
+	if (fd < 0 || fd >= 128) {
+		exit(-1);
+	}
+
+	file_close(fd);
 };

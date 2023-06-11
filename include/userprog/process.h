@@ -15,4 +15,6 @@ struct thread* find_child(tid_t);
 int is_correct_pointer(const void*);
 
 
+int is_correct_pointer(const void *addr);
+
 #endif /* userprog/process.h */

@@ -139,6 +139,9 @@ file_allow_write (struct file *file) {
 /* Returns the size of FILE in bytes. */
 off_t
 file_length (struct file *file) {
+
+	// printf("file pos is: %p\n\n", &file->pos);
+
 	ASSERT (file != NULL);
 	return inode_length (file->inode);
 }

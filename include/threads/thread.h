@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "threads/synch.h"
 #include "threads/interrupt.h"
+#include "filesys/file.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -96,8 +97,6 @@ struct thread {
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 
-#ifdef USERPROG
-	/* Owned by userprog/process.c. */
 	struct list child_list;
 	struct thread *parent;				/* parent thread */
 	
@@ -107,6 +106,11 @@ struct thread {
 	struct semaphore exit_sema;
 	int exit_status;
 	struct list_elem p_elem;			/* Process element */
+	
+	struct file **fdt;
+	int next_fd;
+#ifdef USERPROG
+	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
 
 #endif

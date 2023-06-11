@@ -185,5 +185,6 @@ page_fault (struct intr_frame *f) {
 
 	// 현재 실행 중인 프로세스를 죵료한다. (page fault 발생한 경우 프로세스를 종료하는 것으로 처리한다.)
 	kill (f);
+	exit(-1);
 }
 
