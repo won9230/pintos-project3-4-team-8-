@@ -193,8 +193,9 @@ bool remove (const char *file) {
 */
 int open (const char *file) {
 	if(!is_correct_pointer(file)) {
-		return -1;
+		exit(-1);
 	}
+
 	lock_acquire(&filesys_lock);
 	struct thread *curr = thread_current();
 	struct file *now_file = filesys_open(file);
@@ -214,9 +215,11 @@ int open (const char *file) {
 			break;
 		}
 	}
+
 	if(fd == -1) {
 		file_close(now_file);
 	}
+
 	lock_release(&filesys_lock);
 
 	return fd;
@@ -249,7 +252,6 @@ int filesize (int fd) {
  * @param length
 */
 int read (int fd, void *buffer, unsigned length) {
-	
 	if(!is_correct_pointer(buffer)) {
 		exit(-1);
 	}

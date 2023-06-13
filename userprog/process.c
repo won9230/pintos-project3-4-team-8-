@@ -34,9 +34,11 @@ int is_correct_pointer(const void *addr) {
 	if(is_kernel_vaddr(addr)) {
 		return 0;
 	}
-	if(addr == NULL){
+
+	if(addr == NULL) {
 		return 0;
 	}
+	
 	if(pml4_get_page(curr->pml4, addr) == NULL) {
 		return 0;
 	}
@@ -315,7 +317,7 @@ process_exit (void) {
 			close(i);
 	}
 	file_close(curr->running_file);
-	palloc_free_page(curr->fdt);
+	palloc_free_multiple(curr->fdt, 2);
 	process_cleanup ();
 	sema_up(&curr->wait_sema);
 	sema_down(&curr->exit_sema);

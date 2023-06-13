@@ -195,7 +195,7 @@ thread_create (const char *name, int priority, thread_func *function, void *aux)
 	tid = t->tid = allocate_tid ();
 
 	/* initialize file descriptor table */
-	t->fdt = palloc_get_page(PAL_ZERO);
+	t->fdt = palloc_get_multiple(PAL_ZERO, 2);
 	if(t->fdt == NULL) {
 		return TID_ERROR;
 	}
