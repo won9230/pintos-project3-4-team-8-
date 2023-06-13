@@ -4,13 +4,13 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-#include "threads/synch.h"
 #include "threads/interrupt.h"
-#include "filesys/file.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
 
+/* Project 2 */
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status {
@@ -94,30 +94,46 @@ struct thread {
 	char name[16];                      /* Name (for debugging purposes). */
 	int priority;                       /* Priority. */
 
+	/* Project 1 */
+	int64_t wakeup_ticks;
+
+	int init_priority;
+	struct lock *wait_on_lock;
+	struct list donators;
+	struct list_elem donators_elem;
+
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 
-	struct list child_list;
-	struct thread *parent;				/* parent thread */
-	
-	struct intr_frame fork_tf;
-	struct semaphore load_sema;
-	struct semaphore wait_sema;
-	struct semaphore exit_sema;
+
+	/* Project 2 */
 	int exit_status;
-	struct list_elem p_elem;			/* Process element */
-	struct file* running_file;
+	//struct file * fdt[128];
+	struct file ** fdt;
 	
-	struct file **fdt;
+	int fd;
+
+	struct intr_frame userland_if; 
+
+	struct semaphore load;
+	struct file * exec_file;
+	struct list children;
+	struct list_elem child_elem;
+
+	struct semaphore wait;
+	struct semaphore exit;
+
+
+
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
-
 #endif
 #ifdef VM
 	/* Table for whole virtual memory owned by thread. */
 	struct supplemental_page_table spt;
 #endif
+
 	/* Owned by thread.c. */
 	struct intr_frame tf;               /* Information for switching */
 	unsigned magic;                     /* Detects stack overflow. */
@@ -156,5 +172,15 @@ int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
 void do_iret (struct intr_frame *tf);
+
+/* Project 1 */
+bool cmp_wakeup_ticks(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
+bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
+void thread_sleep(int64_t ticks);
+void thread_wakeup(int64_t ticks);
+void preemption(void);
+void priority_donation(void);
+void remove_donators (struct lock *lock);
+void update_priority (void);
 
 #endif /* threads/thread.h */

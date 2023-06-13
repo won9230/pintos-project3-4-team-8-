@@ -69,7 +69,7 @@ int
 main (void) {
 	uint64_t mem_end;
 	char **argv;
-	
+
 	/* Clear BSS and get machine's RAM size. */
 	bss_init ();
 
@@ -119,8 +119,8 @@ main (void) {
 	printf ("Boot complete.\n");
 
 	/* Run actions specified on kernel command line. */
-	run_actions (argv);
 
+	run_actions (argv);
 	/* Finish up. */
 	if (power_off_when_done)
 		power_off ();

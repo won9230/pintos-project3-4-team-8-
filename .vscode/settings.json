@@ -1,16 +1,9 @@
 {
-    "files.associations": {
-        "syscall-nr.h": "c",
-        "vaddr.h": "c",
-        "gdt.h": "c",
-        "syscall.h": "c",
-        "stdio.h": "c",
-        "*.inc": "c",
-        "lib.h": "c",
-        "stdbool.h": "c",
-        "thread.h": "c",
-        "pte.h": "c",
-        "palloc.h": "c",
-        "main.h": "c"
-    }
+  "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+  "files.associations": {
+    "stdio.h": "c",
+    "thread.h": "c",
+    "*.inc": "c",
+    "main.h": "c"
+  }
 }

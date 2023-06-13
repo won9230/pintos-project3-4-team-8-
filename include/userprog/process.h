@@ -1,7 +1,5 @@
 #ifndef USERPROG_PROCESS_H
 #define USERPROG_PROCESS_H
-#define MAX_STR_LEN 128
-
 
 #include "threads/thread.h"
 
@@ -11,10 +9,6 @@ int process_exec (void *f_name);
 int process_wait (tid_t);
 void process_exit (void);
 void process_activate (struct thread *next);
-struct thread* find_child(tid_t);
-int is_correct_pointer(const void*);
 
-
-int is_correct_pointer(const void *addr);
 
 #endif /* userprog/process.h */
