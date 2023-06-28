@@ -4,8 +4,8 @@ Kernel command line: -q -f put mmap-exit put child-mm-wrt run mmap-exit
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  157,081,600 loops/s.
-hd0:0: detected 321 sector (160 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+Calibrating timer...  117,760,000 loops/s.
+hd0:0: detected 329 sector (164 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1:0: detected 210 sector (105 kB) disk, model "QEMU HARDDISK", serial "QM00003"
 hd1:1: detected 8,064 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00004"
@@ -14,17 +14,41 @@ Boot complete.
 Putting 'mmap-exit' into the file system...
 Putting 'child-mm-wrt' into the file system...
 Executing 'mmap-exit':
-Kernel PANIC at ../../userprog/process.c:81 in initd(): Fail to launch initd
-
-Call stack: 0x8004217d3d 0x800421b3f3 0x800420743a.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 65 ticks
-Thread: 30 idle ticks, 34 kernel ticks, 1 user ticks
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd8
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffa0
+1aaaaaaaaaaaaaaaaaaaaa0x4747fee8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fdc0
+1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
+1aaaaaaaaaaaaaaaaaaaaa0x4747feb0
+(mmap-exit) begin
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd8
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffa0
+1aaaaaaaaaaaaaaaaaaaaa0x4747fee8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fdc0
+1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
+1aaaaaaaaaaaaaaaaaaaaa0x4747feb0
+(child-mm-wrt) begin
+(child-mm-wrt) create "sample.txt"
+(child-mm-wrt) open "sample.txt"
+(child-mm-wrt) mmap "sample.txt"
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
+(child-mm-wrt) end
+child-mm-wrt: exit(0)
+(mmap-exit) open "sample.txt" for verification
+1aaaaaaaaaaaaaaaaaaaaa0x4747fc30
+(mmap-exit) verified contents of "sample.txt"
+(mmap-exit) close "sample.txt"
+(mmap-exit) end
+mmap-exit: exit(0)
+Execution of 'mmap-exit' complete.
+Timer: 88 ticks
+Thread: 30 idle ticks, 46 kernel ticks, 13 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 66 reads, 458 writes
+hd0:1: 209 reads, 474 writes
 hd1:0: 210 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1208 characters output
-Key
+Console: 1796 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...

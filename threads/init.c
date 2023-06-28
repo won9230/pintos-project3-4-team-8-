@@ -101,6 +101,7 @@ main (void) {
 	exception_init ();
 	syscall_init ();
 #endif
+
 	/* Start thread scheduler and enable interrupts. */
 	thread_start ();
 	serial_init_queue ();
@@ -110,21 +111,24 @@ main (void) {
 	/* Initialize file system. */
 	disk_init ();
 	filesys_init (format_filesys);
+
 #endif
 
 #ifdef VM
 	vm_init ();
+
 #endif
-
 	printf ("Boot complete.\n");
-
 	/* Run actions specified on kernel command line. */
-
 	run_actions (argv);
+
+
+
 	/* Finish up. */
 	if (power_off_when_done)
 		power_off ();
 	thread_exit ();
+
 }
 
 /* Clear BSS */
@@ -244,8 +248,10 @@ run_task (char **argv) {
 	if (thread_tests){
 		run_test (task);
 	} else {
+
 		process_wait (process_create_initd (task));
 	}
+	
 #else
 	run_test (task);
 #endif
@@ -275,7 +281,6 @@ run_actions (char **argv) {
 #endif
 		{NULL, 0, NULL},
 	};
-
 	while (*argv != NULL) {
 		const struct action *a;
 		int i;

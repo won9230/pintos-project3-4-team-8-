@@ -130,6 +130,7 @@ thread_start (void) {
 	/* Create the idle thread. */
 	struct semaphore idle_started;
 	sema_init (&idle_started, 0);
+
 	thread_create ("idle", PRI_MIN, idle, &idle_started);
 
 	/* Start preemptive thread scheduling. */
@@ -720,7 +721,7 @@ void preemption()
 {
 	if (thread_current() == idle_thread || list_empty(&ready_list)) return;
 	if (thread_current()->priority < list_entry(list_front(&ready_list), struct thread, elem)->priority) 
-			thread_yield();
+		thread_yield();
 }
 
 void 
@@ -731,9 +732,9 @@ priority_donation(void)
     int priority = cur->priority;
 
 		while(cur->wait_on_lock){
-				holder = cur->wait_on_lock->holder;
-        holder->priority = priority;
-        cur = holder;
+			holder = cur->wait_on_lock->holder;
+        	holder->priority = priority;
+        	cur = holder;
 		}
 }
 

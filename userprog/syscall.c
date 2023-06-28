@@ -11,10 +11,12 @@
 
 /* Project 2 */
 #include "userprog/process.h"
+#include "userprog/syscall.h"
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "threads/synch.h"
 #include "threads/palloc.h"
+
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
@@ -37,9 +39,21 @@ struct lock filesys_lock;
 
 void check_address(void *addr)
 {
-	if(addr == NULL) exit(-1);
-	if(!is_user_vaddr(addr)) exit(-1);
-  if (pml4_get_page(thread_current()->pml4, addr) == NULL) exit(-1);
+	
+	if(addr == NULL) 
+	{
+		exit(-1);
+	}
+
+	if(!is_user_vaddr(addr))
+	{
+	 	exit(-1);
+	}
+ 	// if (pml4_get_page(thread_current()->pml4, addr) == NULL)
+	// {
+	// 	exit(-1);
+	// } 
+
 }
 
 
@@ -54,7 +68,6 @@ void exit(int status)
     struct thread *curr = thread_current();
     curr->exit_status = status;
     printf("%s: exit(%d)\n", curr->name, status);
-	
     thread_exit();
 }
 
@@ -72,12 +85,16 @@ int exec(const char *cmd_line)
 	char * cmd_line_copy;
 	cmd_line_copy = palloc_get_page(0);
 	if (cmd_line_copy == NULL)
-			exit(-1);
+	{
+		exit(-1);
+	}
 	strlcpy(cmd_line_copy, cmd_line, PGSIZE);
 
 	// 스레드의 이름을 변경하지 않고 바로 실행한다.
 	if (process_exec(cmd_line_copy) == -1)
-			exit(-1); // 실패 시 status -1로 종료한다.
+	{
+		exit(-1); // 실패 시 status -1로 종료한다.
+	}
 }
 
 // 4.
@@ -101,8 +118,8 @@ bool remove (const char *file) {
 
 // 7.
 int open (const char *file) {
+	//lock_acquire(&filesys_lock);
 	check_address(file);
-
 	int fd;
 	struct thread *cur = thread_current();
 	struct file *file_obj = filesys_open(file);
@@ -118,7 +135,7 @@ int open (const char *file) {
 		cur->fdt[fd] = file_obj;
 		cur->fd = fd;
 	}
-
+	//lock_release(&filesys_lock);
 	return fd;
 }
 
@@ -140,9 +157,8 @@ int read(int fd, void *buffer, unsigned size) {
 	unsigned char *buf = buffer;
 	int read_count;
 	check_address(buffer);
-
 	if(	fd < 0 || fd>=128) return -1;
-	
+
 	struct thread *cur = thread_current();
 	struct file *fileobj = cur->fdt[fd];
 	
@@ -160,11 +176,16 @@ int read(int fd, void *buffer, unsigned size) {
 	/* STDOUT일 때: -1 반환 */
 	else if (fd == 1) return -1;
 	else {
-		lock_acquire(&filesys_lock);
+		struct page *page = spt_find_page(&thread_current()->spt, buffer);
+		if(page && !page->writable)
+		{
+			exit(-1);
+		}
+		// lock_acquire(&filesys_lock);
 		read_count = file_read(fileobj, buffer, size);
-		lock_release(&filesys_lock);
-
+		// lock_release(&filesys_lock);
 	}
+
 	return read_count;
 }
 
@@ -185,9 +206,9 @@ int write (int fd, const void *buffer, unsigned size) {
 	}
 	else if (fd == 0) return -1;
 	else {
-		lock_acquire(&filesys_lock);
+		// lock_acquire(&filesys_lock);
 		write_count = file_write(fileobj, buffer, size);
-		lock_release(&filesys_lock);
+		// lock_release(&filesys_lock);
 	}
 	return write_count;
 }
@@ -205,8 +226,8 @@ void seek(int fd, unsigned position)
 unsigned tell(int fd)
 {
 
-		if(	fd < 2 || fd >= 128) return;
-		struct thread *cur = thread_current();
+	if(	fd < 2 || fd >= 128) return;
+	struct thread *cur = thread_current();
     struct file *file = cur->fdt[fd];
     if(file == NULL)
         return;
@@ -216,14 +237,59 @@ unsigned tell(int fd)
 // 13.
 void close(int fd)
 {
-		if(	fd < 2 || fd >= 128) return;
-		struct thread *cur = thread_current();
+	if(	fd < 2 || fd >= 128) return;
+	struct thread *cur = thread_current();
     struct file *file = cur->fdt[fd];
     if(file == NULL) return;
     file_close(file);
     cur->fdt[fd] = NULL;
 }
+/* project 3 */
+// 14.
+void *mmap(void *addr, size_t length, int writable, int fd, off_t offset)
+{
+	
+	if(!addr)
+	{
+		return NULL;
+	}
+	if(addr != pg_round_down(addr))
+	{
+		return NULL;
+	}
+	if(offset != pg_round_down(offset))
+	{
+		return NULL;
+	}
+	if(fd == 0 || fd == 1)
+	{
+		return NULL;
+	}
+	if (!is_user_vaddr(addr) || !is_user_vaddr(addr + length))
+	{
+        return NULL;
+	}
+	struct thread * curr = thread_current();
+	struct file *file = curr->fdt[fd];
 
+	if(spt_find_page(&curr->spt, addr) != NULL || file == NULL)
+	{
+		return NULL;
+	}
+
+	if(file_length(file) == 0 || (int)length <= 0)
+	{
+		return NULL;
+	}
+	return do_mmap(addr, length, writable, file, offset);
+}
+//15 .
+void munmap(void *addr)
+{
+	//check_address(addr);
+	do_munmap(addr);
+
+}
 void
 syscall_init (void) {
 	write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48  |
@@ -236,12 +302,14 @@ syscall_init (void) {
 	write_msr(MSR_SYSCALL_MASK,
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 	lock_init(&filesys_lock);
+	lock_init(&open_lock);
 }
 
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f) {
 	int sys_number = f->R.rax; // rax: 시스템 콜 넘버
+	thread_current()->rsp = f->rsp;
 	// printf("sys_number : %d\n",sys_number);
     /* 
 	인자 들어오는 순서:
@@ -253,6 +321,7 @@ syscall_handler (struct intr_frame *f) {
 	6번째 인자: %r9 
 	*/
 	// TODO: Your implementation goes here.
+
 	switch(sys_number) {
 		case SYS_HALT:
 			halt();
@@ -296,8 +365,15 @@ syscall_handler (struct intr_frame *f) {
 		case SYS_CLOSE:
 			close(f->R.rdi);
 			break;
+		case SYS_MMAP:
+			f->R.rax = mmap(f->R.rdi, f->R.rsi, f->R.rdx, f->R.r10, f->R.r8);
+			break;
+		case SYS_MUNMAP:
+			munmap(f->R.rdi);
+			break;
 		default:
 			break;
 	}
 	// printf ("system call!\n");
 }
+

@@ -1,0 +1,49 @@
+Kernel command line: -q -f put mmap-read put sample.txt run mmap-read
+0 ~ 9fc00 1
+100000 ~ 13e0000 1
+Pintos booting with: 
+	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
+	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
+Calibrating timer...  157,081,600 loops/s.
+hd0:0: detected 329 sector (164 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
+hd1:0: detected 110 sector (55 kB) disk, model "QEMU HARDDISK", serial "QM00003"
+hd1:1: detected 8,064 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00004"
+Formatting file system...done.
+Boot complete.
+Putting 'mmap-read' into the file system...
+Putting 'sample.txt' into the file system...
+Executing 'mmap-read':
+(mmap-read) begin
+(mmap-read) open "sample.txt"
+(mmap-read) mmap "sample.txt"
+
+mmap-read test clear
+(mmap-read) end
+mmap-read: exit(0)
+Interrupt 0x0d (#GP General Protection Exception) at rip=e8558b48d78948f0
+ cr2=0000000010000000 error=               0
+rax e8558b48d78948f0 rbx 000000004747ff60 rcx 0000000000000000 rdx 0000008004248618
+rsp 0000008004244db8 rbp 0000008004244dd0 rsi 0000000000000000 rdi 0000008004248618
+rip e8558b48d78948f0 r8 0000008004244de8  r9 000000800421b1b6 r10 0000000000000000
+r11 0000000000000206 r12 000000800421d453 r13 0000800420a56600 r14 00008004244f1000
+r15 0000010424400000 rflags 00000286
+es: 001b ds: 001b cs: 0008 ss: 0010
+Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
+Call stack: 0x8004217d3d 0x800421c9d8 0x8004208e47 0x8004209265 0x80042210d8 0x800421a30b 0x80042212b5 0x800421b9ac 0x800421b946 0x80042071ba 0x800421cc5c 0x800421d4da 0x800421cb77 0x400dc2 0Interrupt 0x0d (#GP General Protection Exception) at rip=8004214d77
+ cr2=0000000010000000 error=               0
+rax 0000800424421000 rbx 000000004747ff60 rcx 00000080040b8000 rdx 00000000000003d4
+rsp 0000008004244bf0 rbp 0000008004244c00 rsi 0000000000009f0f rdi 0000000000000000
+rip 0000008004214d77 r8 0000008004244b08  r9 000000800421b1b6 r10 0000000000000000
+r11 0000000000000206 r12 000000800421d453 r13 0000800420a56600 r14 00008004244f1000
+r15 0000010424400000 rflags 00000006
+es: 0010 ds: 0010 cs: 0008 ss: 0010
+Kernel PANIC recursion at ../../userprog/exception.c:97 in kill().
+Timer: 69 ticks
+Thread: 30 idle ticks, 32 kernel ticks, 7 user ticks
+hd0:0: 0 reads, 0 writes
+hd0:1: 123 reads, 258 writes
+hd1:0: 110 reads, 0 writes
+hd1:1: 0 reads, 0 writes
+Console: 2462 characters output
+Key

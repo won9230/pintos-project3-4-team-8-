@@ -34,7 +34,7 @@ test_main (void)
     for(page_end = 0; page_end < len; page_end+=4096);
 
     for (i = len+1; i < page_end; i++) 
-    {
+    {   
         if (actual[i] != 0) {
             fail ("byte %zu of mmap'd region has value %02hhx (should be 0)", i, actual[i]);
         }

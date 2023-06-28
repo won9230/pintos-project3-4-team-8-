@@ -1,7 +1,77 @@
 FAIL
-Kernel panic in run: PANIC at ../../userprog/process.c:81 in initd(): Fail to launch initd
-Call stack: 0x8004217d3d 0x800421b3f3 0x800420743a
-Translation of call stack:
-0x0000008004217d3d: debug_panic (lib/kernel/debug.c:32)
-0x000000800421b3f3: initd (userprog/process.c:82)
-0x000000800420743a: kernel_thread (threads/thread.c:428)
+Test output failed to match any acceptable form.
+
+Acceptable output:
+  (mmap-shuffle) begin
+  (mmap-shuffle) create "buffer"
+  (mmap-shuffle) open "buffer"
+  (mmap-shuffle) mmap "buffer"
+  (mmap-shuffle) init: cksum=3115322833
+  (mmap-shuffle) shuffle 0: cksum=2274652418
+  (mmap-shuffle) shuffle 1: cksum=2281360714
+  (mmap-shuffle) shuffle 2: cksum=3504443700
+  (mmap-shuffle) shuffle 3: cksum=2850516818
+  (mmap-shuffle) shuffle 4: cksum=2406916757
+  (mmap-shuffle) shuffle 5: cksum=3377643430
+  (mmap-shuffle) shuffle 6: cksum=658047850
+  (mmap-shuffle) shuffle 7: cksum=493716582
+  (mmap-shuffle) shuffle 8: cksum=3359519593
+  (mmap-shuffle) shuffle 9: cksum=143675990
+  (mmap-shuffle) end
+Differences in `diff -u' format:
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffd8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffa0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff98
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdc0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fd98
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
+  (mmap-shuffle) begin
+  (mmap-shuffle) create "buffer"
+  (mmap-shuffle) open "buffer"
+  (mmap-shuffle) mmap "buffer"
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
+  (mmap-shuffle) init: cksum=3115322833
+  (mmap-shuffle) shuffle 0: cksum=2274652418
+  (mmap-shuffle) shuffle 1: cksum=2281360714
+  (mmap-shuffle) shuffle 2: cksum=3504443700
+  (mmap-shuffle) shuffle 3: cksum=2850516818
+  (mmap-shuffle) shuffle 4: cksum=2406916757
+  (mmap-shuffle) shuffle 5: cksum=3377643430
+  (mmap-shuffle) shuffle 6: cksum=658047850
+  (mmap-shuffle) shuffle 7: cksum=493716582
+  (mmap-shuffle) shuffle 8: cksum=3359519593
+  (mmap-shuffle) shuffle 9: cksum=143675990
+  (mmap-shuffle) end
+
+(Process exit codes are excluded for matching purposes.)

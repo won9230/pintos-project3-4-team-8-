@@ -1,7 +1,71 @@
 FAIL
-Kernel panic in run: PANIC at ../../userprog/process.c:81 in initd(): Fail to launch initd
-Call stack: 0x8004217d3d 0x800421b3f3 0x800420743a
-Translation of call stack:
-0x0000008004217d3d: debug_panic (lib/kernel/debug.c:32)
-0x000000800421b3f3: initd (userprog/process.c:82)
-0x000000800420743a: kernel_thread (threads/thread.c:428)
+Test output failed to match any acceptable form.
+
+Acceptable output:
+  (page-shuffle) begin
+  (page-shuffle) init: cksum=3115322833
+  (page-shuffle) shuffle 0: cksum=2274652418
+  (page-shuffle) shuffle 1: cksum=2281360714
+  (page-shuffle) shuffle 2: cksum=3504443700
+  (page-shuffle) shuffle 3: cksum=2850516818
+  (page-shuffle) shuffle 4: cksum=2406916757
+  (page-shuffle) shuffle 5: cksum=3377643430
+  (page-shuffle) shuffle 6: cksum=658047850
+  (page-shuffle) shuffle 7: cksum=493716582
+  (page-shuffle) shuffle 8: cksum=3359519593
+  (page-shuffle) shuffle 9: cksum=143675990
+  (page-shuffle) end
+Differences in `diff -u' format:
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffd8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffa0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fee8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdc0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fd98
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
+  (page-shuffle) begin
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff80
+  (page-shuffle) init: cksum=3115322833
+  (page-shuffle) shuffle 0: cksum=2274652418
+  (page-shuffle) shuffle 1: cksum=2281360714
+  (page-shuffle) shuffle 2: cksum=3504443700
+  (page-shuffle) shuffle 3: cksum=2850516818
+  (page-shuffle) shuffle 4: cksum=2406916757
+  (page-shuffle) shuffle 5: cksum=3377643430
+  (page-shuffle) shuffle 6: cksum=658047850
+  (page-shuffle) shuffle 7: cksum=493716582
+  (page-shuffle) shuffle 8: cksum=3359519593
+  (page-shuffle) shuffle 9: cksum=143675990
+  (page-shuffle) end
+
+(Process exit codes are excluded for matching purposes.)

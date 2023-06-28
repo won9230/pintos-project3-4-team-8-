@@ -5,8 +5,19 @@
 
 struct page;
 enum vm_type;
-
+/* project 3 */
+struct lazy_load_struct 
+{
+    struct file *file;
+    size_t page_read_bytes;
+    size_t page_zero_bytes;
+	off_t offset;
+};
 struct file_page {
+    struct file *file;
+    size_t page_read_bytes;
+    size_t page_zero_bytes;
+	off_t offset;
 };
 
 void vm_file_init (void);

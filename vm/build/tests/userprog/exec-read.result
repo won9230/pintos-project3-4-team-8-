@@ -1,7 +1,51 @@
 FAIL
-Kernel panic in run: PANIC at ../../userprog/process.c:81 in initd(): Fail to launch initd
-Call stack: 0x8004217d3d 0x800421b3f3 0x800420743a
-Translation of call stack:
-0x0000008004217d3d: debug_panic (lib/kernel/debug.c:32)
-0x000000800421b3f3: initd (userprog/process.c:82)
-0x000000800420743a: kernel_thread (threads/thread.c:428)
+Test output failed to match any acceptable form.
+
+Acceptable output:
+  (exec-read) begin
+  (exec-read) open "sample.txt"
+  (exec-read) read "sample.txt" first 20 bytes
+  (child-read) begin
+  (child-read) open "sample.txt"
+  (child-read) read "sample.txt" first 20 bytes
+  (child-read) read "sample.txt" remainders
+  (child-read) Child success
+  (child-read) end
+  child-read: exit(0)
+  (exec-read) Parent success
+  (exec-read) end
+  exec-read: exit(0)
+Differences in `diff -u' format:
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffd8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffa0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fee8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdc0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
+  (exec-read) begin
+  (exec-read) open "sample.txt"
+  (exec-read) read "sample.txt" first 20 bytes
++ 1aaaaaaaaaaaaaaaaaaaaa0x8004244dd0
++ llllllllllllllllllllllllllllll
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747ff08
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fec8
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fec0
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fd98
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fd70
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fd90
++ 1aaaaaaaaaaaaaaaaaaaaa0x4747fd90
+  (child-read) begin
+  (child-read) open "sample.txt"
+  (child-read) read "sample.txt" first 20 bytes
++ 1aaaaaaaaaaaaaaaaaaaaa0x8004251dd0
++ llllllllllllllllllllllllllllll
+  (child-read) read "sample.txt" remainders
+  (child-read) Child success
+  (child-read) end
+  child-read: exit(0)
++ 1aaaaaaaaaaaaaaaaaaaaa0x8004244dd0
++ llllllllllllllllllllllllllllll
+  (exec-read) Parent success
+  (exec-read) end
+  exec-read: exit(0)

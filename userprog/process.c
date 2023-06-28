@@ -18,8 +18,10 @@
 #include "threads/mmu.h"
 #include "threads/vaddr.h"
 #include "intrinsic.h"
+#define VM
 #ifdef VM
 #include "vm/vm.h"
+#include "userprog/syscall.h"
 #endif
 
 /* Project 2 */
@@ -61,11 +63,11 @@ process_create_initd (const char *file_name) {
 	char * temp;
 	strtok_r(file_name," ", &temp);
 
-
 	/* Create a new thread to execute FILE_NAME. */
 	tid = thread_create (file_name, PRI_DEFAULT, initd, fn_copy);
 	if (tid == TID_ERROR)
 		palloc_free_page (fn_copy);
+
 	return tid;
 }
 
@@ -79,6 +81,7 @@ initd (void *f_name) {
 
 	if (process_exec (f_name) < 0)
 		PANIC("Fail to launch initd\n");
+
 	NOT_REACHED ();
 }
 
@@ -93,7 +96,9 @@ process_fork (const char *name, struct intr_frame *if_) {
 	
 	if (pid == TID_ERROR) return TID_ERROR;
 
+
 	sema_down(&cur->load);
+
 	return pid;
 }
 
@@ -195,7 +200,10 @@ static void
 	process_init ();
 	
 	/* Project 2 */
+
 	sema_up(&parent->load);
+
+
 	/* Finally, switch to the newly created process. */
 	if (succ)
 		do_iret (&if_);
@@ -211,7 +219,7 @@ int
 process_exec (void *f_name) {
 	char *file_name = f_name;
 	bool success;
-
+	
 	/* We cannot use the intr_frame in the thread structure.
 	 * This is because when current thread rescheduled,
 	 * it stores the execution information to the member. */
@@ -222,7 +230,6 @@ process_exec (void *f_name) {
 
 	/* We first kill the current context */
 	process_cleanup ();
-
 	/* And then load the binary */
 	success = load (file_name, &_if);
 
@@ -233,7 +240,9 @@ process_exec (void *f_name) {
 
 	/* Start switched process. */
 	do_iret (&_if);
+
 	NOT_REACHED ();
+
 }
 
 
@@ -262,9 +271,11 @@ process_wait (tid_t child_tid) {
 			break;
 		}
 	}
+
 	if(child == NULL) return -1;
 
 	sema_down(&child->wait);
+
 	list_remove(&child->child_elem);
 
 	sema_up(&child->exit);
@@ -289,7 +300,7 @@ process_exit (void) {
 	
 	file_close(curr->exec_file);
 	process_cleanup ();
-
+	//supplemental_page_table_kill(&curr->spt);
 	sema_up(&curr->wait);
 	sema_down(&curr->exit);
 }
@@ -298,7 +309,6 @@ process_exit (void) {
 static void
 process_cleanup (void) {
 	struct thread *curr = thread_current ();
-
 #ifdef VM
 	supplemental_page_table_kill (&curr->spt);
 #endif
@@ -422,6 +432,7 @@ load (const char *file_name, struct intr_frame *if_) {
 
 	/* Open executable file. */
 	file = filesys_open (argv[0]);
+
 	if (file == NULL) {
 		printf ("load: %s: open failed\n", argv[0]);
 		goto done;
@@ -482,31 +493,33 @@ load (const char *file_name, struct intr_frame *if_) {
 						read_bytes = 0;
 						zero_bytes = ROUND_UP (page_offset + phdr.p_memsz, PGSIZE);
 					}
-					if (!load_segment (file, file_page, (void *) mem_page,
-								read_bytes, zero_bytes, writable))
+
+					if (!load_segment (file, file_page, (void *) mem_page, read_bytes, zero_bytes, writable))
+					{
+
 						goto done;
+					}
+
 				}
 				else
 					goto done;
 				break;
 		}
 	}
-
 	/* Project 2 */
 	t->exec_file = file;
+
 	// 현재 실행중인 파일은 수정할 수 없게 막는다.
 	file_deny_write(file);
 
 	/* Set up stack. */
 	if (!setup_stack (if_))
 		goto done;
-
 	/* Start address. */
 	if_->rip = ehdr.e_entry;
 
 	/* TODO: Your code goes here.
 	 * TODO: Implement argument passing (see project2/argument_passing.html). */
-
 	argument_passing(argv,argc,if_);
 
 	// hex_dump(if_->rsp, if_->rsp, USER_STACK - (uint64_t)if_->rsp, true); 
@@ -515,6 +528,7 @@ load (const char *file_name, struct intr_frame *if_) {
 done:
 	/* We arrive here whether the load is successful or not. */
 	// file_close (file);
+
 	return success;
 }
 
@@ -563,6 +577,34 @@ validate_segment (const struct Phdr *phdr, struct file *file) {
 	return true;
 }
 
+
+void argument_passing(char ** argv, int argc, struct intr_frame *if_){
+	char * temp[64];
+	int len;
+	for(int i = argc - 1; i>=0; i--){
+		len = strlen(argv[i]);
+		if_->rsp = if_->rsp - (len + 1);
+		memcpy(if_->rsp, argv[i], len+1);
+		temp[i] = if_->rsp;
+	}
+
+	while(if_->rsp % 8 !=0){
+		if_->rsp--;
+		*(uint8_t *) if_->rsp = 0;
+	}
+	
+	for(int i = argc; i>=0; i--){
+		if_->rsp-=8;
+		if(i == argc) memset(if_->rsp, 0, sizeof(char**));
+		else memcpy(if_->rsp, &temp[i],sizeof(char**));
+	}
+	if_->rsp = if_->rsp - 8;
+	memset(if_->rsp, 0, 8);
+	if_->R.rdi = argc;
+  	if_->R.rsi = if_->rsp + 8;
+
+}
+
 #ifndef VM
 /* Codes of this block will be ONLY USED DURING project 2.
  * If you want to implement the function for whole project 2, implement it
@@ -570,6 +612,7 @@ validate_segment (const struct Phdr *phdr, struct file *file) {
 
 /* load() helpers. */
 static bool install_page (void *upage, void *kpage, bool writable);
+
 
 /* Loads a segment starting at offset OFS in FILE at address
  * UPAGE.  In total, READ_BYTES + ZERO_BYTES bytes of virtual
@@ -588,10 +631,10 @@ static bool install_page (void *upage, void *kpage, bool writable);
 static bool
 load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		uint32_t read_bytes, uint32_t zero_bytes, bool writable) {
+
 	ASSERT ((read_bytes + zero_bytes) % PGSIZE == 0);
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
-
 	file_seek (file, ofs);
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
@@ -600,7 +643,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-		/* Get a page of memory. */
+		/* Get a page o memory. */
 		uint8_t *kpage = palloc_get_page (PAL_USER);
 		if (kpage == NULL)
 			return false;
@@ -624,6 +667,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 		zero_bytes -= page_zero_bytes;
 		upage += PGSIZE;
 	}
+	//vm_alloc_page_with_initializer(,upage,);
 	return true;
 }
 
@@ -631,8 +675,9 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 static bool
 setup_stack (struct intr_frame *if_) {
 	uint8_t *kpage;
-	bool success = false;
 
+	bool success = false;
+	
 	kpage = palloc_get_page (PAL_USER | PAL_ZERO);
 	if (kpage != NULL) {
 		success = install_page (((uint8_t *) USER_STACK) - PGSIZE, kpage, true);
@@ -641,6 +686,7 @@ setup_stack (struct intr_frame *if_) {
 		else
 			palloc_free_page (kpage);
 	}
+
 	return success;
 }
 
@@ -662,16 +708,57 @@ install_page (void *upage, void *kpage, bool writable) {
 	return (pml4_get_page (t->pml4, upage) == NULL
 			&& pml4_set_page (t->pml4, upage, kpage, writable));
 }
+
+
+
 #else
+
 /* From here, codes will be used after project 3.
  * If you want to implement the function for only project 2, implement it on the
  * upper block. */
-
-static bool
+bool
 lazy_load_segment (struct page *page, void *aux) {
 	/* TODO: Load the segment from the file */
 	/* TODO: This called when the first page fault occurs on address VA. */
 	/* TODO: VA is available when calling this function. */
+	/* project 3 */
+	uint8_t *kpage = page->frame->kva;
+	if(kpage == NULL)
+	{
+		return false;
+	}
+	struct lazy_load_struct *lazy_load_struct = aux;
+	/* Load this page. */
+	if(VM_TYPE(page->operations->type) == VM_ANON)
+	{
+		if(file_read(lazy_load_struct->file, kpage, lazy_load_struct->page_read_bytes) != (int)lazy_load_struct->page_read_bytes)
+		{
+			palloc_free_page(kpage);
+			return false;
+		}
+		memset(kpage + lazy_load_struct->page_read_bytes, 0, lazy_load_struct->page_zero_bytes);
+	}
+	else if(VM_TYPE(page->operations->type) == VM_FILE)
+	{
+		off_t true_byte = file_read(lazy_load_struct->file, kpage, lazy_load_struct->page_read_bytes);
+		if(true_byte < (int)lazy_load_struct->page_read_bytes)
+		{
+			if(true_byte == 0 && lazy_load_struct->page_read_bytes != 0)
+			{
+				palloc_free_page(kpage);
+				return false;
+			}
+			else
+			{
+				memset(kpage + true_byte, 0, PGSIZE - true_byte);
+			}
+		}
+	}
+	/* xxxxxxxxxx */
+
+	// free(lazy_load_struct->file);
+	//free(lazy_load_struct);	//free를 어디서 함?
+	return true;
 }
 
 /* Loads a segment starting at offset OFS in FILE at address
@@ -695,23 +782,36 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 	ASSERT (pg_ofs (upage) == 0);
 	ASSERT (ofs % PGSIZE == 0);
 
+	struct file *f = file_reopen(file);
 	while (read_bytes > 0 || zero_bytes > 0) {
 		/* Do calculate how to fill this page.
 		 * We will read PAGE_READ_BYTES bytes from FILE
 		 * and zero the final PAGE_ZERO_BYTES bytes. */
+		struct lazy_load_struct *lazy_load_struct = malloc(sizeof(struct lazy_load_struct));
+
 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
-
+		
+		lazy_load_struct->file = malloc(sizeof(struct file));
+		memcpy(lazy_load_struct->file,f,(sizeof(struct file)));
+		//lazy_load_struct->file = file;
+		lazy_load_struct->page_read_bytes = page_read_bytes;
+		lazy_load_struct->page_zero_bytes = page_zero_bytes;
+		file_seek(lazy_load_struct->file, ofs);
 		/* TODO: Set up aux to pass information to the lazy_load_segment. */
-		void *aux = NULL;
+		/* project 3 */
 		if (!vm_alloc_page_with_initializer (VM_ANON, upage,
-					writable, lazy_load_segment, aux))
-			return false;
-
+					writable, lazy_load_segment, lazy_load_struct))
+					{	
+						free(lazy_load_struct);
+						return false;	
+					}
 		/* Advance. */
 		read_bytes -= page_read_bytes;
 		zero_bytes -= page_zero_bytes;
 		upage += PGSIZE;
+		/* project 3 */
+		ofs += page_read_bytes;	
 	}
 	return true;
 }
@@ -726,36 +826,15 @@ setup_stack (struct intr_frame *if_) {
 	 * TODO: If success, set the rsp accordingly.
 	 * TODO: You should mark the page is stack. */
 	/* TODO: Your code goes here */
-
+	/* project 3 */
+	if(vm_alloc_page(VM_ANON | VM_MARKER_0,stack_bottom, true))
+	{
+		success = vm_claim_page(stack_bottom);
+		if (success)
+		{
+			if_->rsp = USER_STACK;
+		}
+	}
 	return success;
 }
 #endif /* VM */
-
-
-void argument_passing(char ** argv, int argc, struct intr_frame *if_){
-	char * temp[64];
-	int len;
-
-	for(int i = argc - 1; i>=0; i--){
-		len = strlen(argv[i]);
-		if_->rsp = if_->rsp - (len + 1);
-		memcpy(if_->rsp, argv[i], len+1);
-		temp[i] = if_->rsp;
-	}
-
-	while(if_->rsp % 8 !=0){
-		if_->rsp--;
-		*(uint8_t *) if_->rsp = 0;
-	}
-	
-	for(int i = argc; i>=0; i--){
-		if_->rsp-=8;
-		if(i == argc) memset(if_->rsp, 0, sizeof(char**));
-		else memcpy(if_->rsp, &temp[i],sizeof(char**));
-	}
-	if_->rsp = if_->rsp - 8;
-	memset(if_->rsp, 0, 8);
-
-	if_->R.rdi = argc;
-  	if_->R.rsi = if_->rsp + 8;
-}

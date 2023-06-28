@@ -5,6 +5,8 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#define USERPROG
+#define VM
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -110,7 +112,9 @@ struct thread {
 	int exit_status;
 	//struct file * fdt[128];
 	struct file ** fdt;
-	
+	/* project 3 */
+	void *rsp;
+
 	int fd;
 
 	struct intr_frame userland_if; 

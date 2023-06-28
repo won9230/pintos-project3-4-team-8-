@@ -249,7 +249,7 @@ disk_write (struct disk *d, disk_sector_t sec_no, const void *buffer) {
 	d->write_cnt++;
 	lock_release (&c->lock);
 }
-
+
 /* Disk detection and identification. */
 
 static void print_ata_string (char *string, size_t size);
@@ -402,7 +402,7 @@ print_ata_string (char *string, size_t size) {
 }
 
 /* Selects device D, waiting for it to become ready, and then
-   writes SEC_NO to the disk's sector selection registers.  (We
+   writes SEC_NO to the disk's sector selection registers).  (We
    use LBA mode.) */
 static void
 select_sector (struct disk *d, disk_sector_t sec_no) {
@@ -445,7 +445,7 @@ static void
 output_sector (struct channel *c, const void *sector) {
 	outsw (reg_data (c), sector, DISK_SECTOR_SIZE / 2);
 }
-
+
 /* Low-level ATA primitives. */
 
 /* Wait up to 10 seconds for the controller to become idle, that
@@ -510,7 +510,7 @@ select_device_wait (const struct disk *d) {
 	select_device (d);
 	wait_until_idle (d);
 }
-
+
 /* ATA interrupt handler. */
 static void
 interrupt_handler (struct intr_frame *f) {

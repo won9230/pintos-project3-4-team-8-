@@ -4,8 +4,8 @@ Kernel command line: -q -f put mmap-twice put sample.txt run mmap-twice
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  157,081,600 loops/s.
-hd0:0: detected 321 sector (160 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+Calibrating timer...  117,760,000 loops/s.
+hd0:0: detected 329 sector (164 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1:0: detected 109 sector (54 kB) disk, model "QEMU HARDDISK", serial "QM00003"
 hd1:1: detected 8,064 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00004"
@@ -14,17 +14,32 @@ Boot complete.
 Putting 'mmap-twice' into the file system...
 Putting 'sample.txt' into the file system...
 Executing 'mmap-twice':
-Kernel PANIC at ../../userprog/process.c:81 in initd(): Fail to launch initd
-
-Call stack: 0x8004217d3d 0x800421b3f3 0x800420743a.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 62 ticks
-Thread: 30 idle ticks, 32 kernel ticks, 0 user ticks
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd8
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffa0
+1aaaaaaaaaaaaaaaaaaaaa0x4747fee8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fdc0
+1aaaaaaaaaaaaaaaaaaaaa0x4747fdb8
+1aaaaaaaaaaaaaaaaaaaaa0x4747feb0
+(mmap-twice) begin
+(mmap-twice) open "sample.txt" #0
+(mmap-twice) mmap "sample.txt" #0 at 0x10000000
+(mmap-twice) open "sample.txt" #1
+(mmap-twice) mmap "sample.txt" #1 at 0x20000000
+(mmap-twice) compare mmap'd file 0 against data
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff40
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff30
+(mmap-twice) compare mmap'd file 1 against data
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff30
+(mmap-twice) end
+mmap-twice: exit(0)
+Execution of 'mmap-twice' complete.
+Timer: 78 ticks
+Thread: 30 idle ticks, 36 kernel ticks, 12 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 66 reads, 256 writes
+hd0:1: 128 reads, 256 writes
 hd1:0: 109 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1207 characters output
-Key
+Console: 1574 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...

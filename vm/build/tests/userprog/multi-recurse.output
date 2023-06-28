@@ -4,8 +4,8 @@ Kernel command line: -q -f put multi-recurse run 'multi-recurse 15'
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  130,867,200 loops/s.
-hd0:0: detected 321 sector (160 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+Calibrating timer...  117,760,000 loops/s.
+hd0:0: detected 329 sector (164 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1:0: detected 113 sector (56 kB) disk, model "QEMU HARDDISK", serial "QM00003"
 hd1:1: detected 8,064 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00004"
@@ -13,17 +13,189 @@ Formatting file system...done.
 Boot complete.
 Putting 'multi-recurse' into the file system...
 Executing 'multi-recurse 15':
-Kernel PANIC at ../../userprog/process.c:81 in initd(): Fail to launch initd
-
-Call stack: 0x8004217d3d 0x800421b3f3 0x800420743a.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 63 ticks
-Thread: 30 idle ticks, 32 kernel ticks, 1 user ticks
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffc8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fef8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe90
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe48
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+1aaaaaaaaaaaaaaaaaaaaa0x4747fcf8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd18
+(multi-recurse) begin 15
+(multi-recurse) exec("multi-recurse 14")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffc8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fef8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe90
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe48
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+1aaaaaaaaaaaaaaaaaaaaa0x4747fcf8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd18
+(multi-recurse) begin 14
+(multi-recurse) exec("multi-recurse 13")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffc8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fef8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe90
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe48
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+1aaaaaaaaaaaaaaaaaaaaa0x4747fcf8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd18
+(multi-recurse) begin 13
+(multi-recurse) exec("multi-recurse 12")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffc8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fef8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe90
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe48
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+1aaaaaaaaaaaaaaaaaaaaa0x4747fcf8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd18
+(multi-recurse) begin 12
+(multi-recurse) exec("multi-recurse 11")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffc8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fef8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe90
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe48
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+1aaaaaaaaaaaaaaaaaaaaa0x4747fcf8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd18
+(multi-recurse) begin 11
+(multi-recurse) exec("multi-recurse 10")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffc8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fef8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe90
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe48
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+1aaaaaaaaaaaaaaaaaaaaa0x4747fcf8
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd18
+(multi-recurse) begin 10
+(multi-recurse) exec("multi-recurse 9")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 9
+(multi-recurse) exec("multi-recurse 8")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 8
+(multi-recurse) exec("multi-recurse 7")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 7
+(multi-recurse) exec("multi-recurse 6")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 6
+(multi-recurse) exec("multi-recurse 5")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 5
+(multi-recurse) exec("multi-recurse 4")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 4
+(multi-recurse) exec("multi-recurse 3")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 3
+(multi-recurse) exec("multi-recurse 2")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 2
+(multi-recurse) exec("multi-recurse 1")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 1
+(multi-recurse) exec("multi-recurse 0")
+1aaaaaaaaaaaaaaaaaaaaa0x4747ffd0
+1aaaaaaaaaaaaaaaaaaaaa0x4747ff00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe98
+1aaaaaaaaaaaaaaaaaaaaa0x4747fe50
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd28
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd00
+1aaaaaaaaaaaaaaaaaaaaa0x4747fd20
+(multi-recurse) begin 0
+(multi-recurse) end 0
+multi-recurse: exit(0)
+(multi-recurse) end 1
+multi-recurse: exit(1)
+(multi-recurse) end 2
+multi-recurse: exit(2)
+(multi-recurse) end 3
+multi-recurse: exit(3)
+(multi-recurse) end 4
+multi-recurse: exit(4)
+(multi-recurse) end 5
+multi-recurse: exit(5)
+(multi-recurse) end 6
+multi-recurse: exit(6)
+(multi-recurse) end 7
+multi-recurse: exit(7)
+(multi-recurse) end 8
+multi-recurse: exit(8)
+(multi-recurse) end 9
+multi-recurse: exit(9)
+(multi-recurse) end 10
+multi-recurse: exit(10)
+(multi-recurse) end 11
+multi-recurse: exit(11)
+(multi-recurse) end 12
+multi-recurse: exit(12)
+(multi-recurse) end 13
+multi-recurse: exit(13)
+(multi-recurse) end 14
+multi-recurse: exit(14)
+(multi-recurse) end 15
+multi-recurse: exit(15)
+Execution of 'multi-recurse' complete.
+Timer: 172 ticks
+Thread: 30 idle ticks, 45 kernel ticks, 97 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 39 reads, 254 writes
+hd0:1: 867 reads, 254 writes
 hd1:0: 113 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1167 characters output
-Key
+Console: 6348 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...
